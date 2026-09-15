@@ -1,4 +1,9 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import {
+  type FormEvent,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import {
   Link,
   Navigate,
@@ -22,6 +27,7 @@ import {
   Users,
   X,
 } from "lucide-react";
+
 import {
   AdminShell,
   Button,
@@ -31,6 +37,7 @@ import {
   LoadingState,
   PageTransition,
 } from "./components";
+
 import {
   adminLogin,
   adminLogout,
@@ -45,23 +52,31 @@ import {
   updatePaymentStatus,
   updateRoomStatus,
 } from "./lib/booking";
+
 import type {
-  Booking,
   BookingStatus,
   PaymentStatus,
   RoomStatus,
 } from "./types";
+
 import type {
   AdminStats,
   BookingWithRoom,
   RoomAssignment,
   RoomUnit,
 } from "./lib/booking";
+
+/* =====================================
+   HELPERS
+===================================== */
+
 function formatCurrency(amount: number) {
   return `₹${Number(amount || 0).toLocaleString("en-IN")}`;
 }
+
 function formatDate(date: string) {
   if (!date) return "—";
+
   return new Date(`${date}T00:00:00`).toLocaleDateString(
     "en-IN",
     {
@@ -71,17 +86,23 @@ function formatDate(date: string) {
     }
   );
 }
+
 function formatStatus(status: string) {
   return status
-    .replaceAll("_", " ")
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (letter: string) =>
+      letter.toUpperCase()
+    );
 }
+
 function statusClass(status: string) {
-  return `admin-status ${status.replaceAll("_", "-")}`;
+  return `admin-status ${status.replace(/_/g, "-")}`;
 }
+
 /* =====================================
    ADMIN AUTH GUARD
 ===================================== */
+
 function AdminGuard({
   children,
 }: {
@@ -89,8 +110,10 @@ function AdminGuard({
 }) {
   const [checking, setChecking] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
+
   useEffect(() => {
     let active = true;
+
     getCurrentAdmin()
       .then((admin) => {
         if (active) {
@@ -107,35 +130,48 @@ function AdminGuard({
           setChecking(false);
         }
       });
+
     return () => {
       active = false;
     };
   }, []);
+
   if (checking) {
-    return <LoadingState text="Checking admin session..." />;
+    return (
+      <LoadingState text="Checking admin session..." />
+    );
   }
+
   if (!authenticated) {
     return <Navigate to="/admin/login" replace />;
   }
+
   return <>{children}</>;
 }
+
 /* =====================================
    ADMIN LOGIN
 ===================================== */
+
 export function AdminLogin() {
   const navigate = useNavigate();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setError("");
+
     if (!email.trim() || !password) {
       setError("Please enter your email and password.");
       return;
     }
+
     setLoading(true);
+
     try {
       await adminLogin(email.trim(), password);
       navigate("/admin", { replace: true });
@@ -149,6 +185,7 @@ export function AdminLogin() {
       setLoading(false);
     }
   };
+
   return (
     <PageTransition>
       <main className="admin-login-page">
@@ -156,44 +193,64 @@ export function AdminLogin() {
           <div className="admin-brand-mark">
             <ShieldCheck size={28} />
           </div>
-          <span className="eyebrow">AL RAHAMAT HOTEL</span>
+
+          <span className="eyebrow">
+            AL RAHAMAT HOTEL
+          </span>
+
           <h1>Admin portal</h1>
+
           <p>
             Sign in to manage reservations, rooms and hotel
             operations.
           </p>
+
           <form
             className="admin-login-form"
             onSubmit={handleSubmit}
           >
             <FormField
               label="Email"
+              name="email"
               type="email"
               value={email}
-              onChange={setEmail}
+              onChange={(event) =>
+                setEmail(event.target.value)
+              }
               placeholder="admin@example.com"
               required
+              autoComplete="email"
             />
+
             <FormField
               label="Password"
+              name="password"
               type="password"
               value={password}
-              onChange={setPassword}
+              onChange={(event) =>
+                setPassword(event.target.value)
+              }
               placeholder="••••••••"
               required
+              autoComplete="current-password"
             />
+
             {error && (
-              <div className="form-error">{error}</div>
+              <div className="form-error">
+                {error}
+              </div>
             )}
+
             <Button
               type="submit"
-              full
+              fullWidth
               disabled={loading}
             >
               {loading ? "Signing in..." : "Sign in"}
               {!loading && <LogIn size={17} />}
             </Button>
           </form>
+
           <Link
             className="admin-back-link"
             to="/"
@@ -205,11 +262,14 @@ export function AdminLogin() {
     </PageTransition>
   );
 }
+
 /* =====================================
    ADMIN NAVIGATION
 ===================================== */
+
 function AdminNavigation() {
   const location = useLocation();
+
   const links = [
     {
       to: "/admin",
@@ -232,6 +292,7 @@ function AdminNavigation() {
       icon: <CalendarDays size={18} />,
     },
   ];
+
   return (
     <nav className="admin-navigation">
       {links.map((link) => {
@@ -239,6 +300,7 @@ function AdminNavigation() {
           location.pathname === link.to ||
           (link.to !== "/admin" &&
             location.pathname.startsWith(link.to));
+
         return (
           <Link
             key={link.to}
@@ -253,9 +315,11 @@ function AdminNavigation() {
     </nav>
   );
 }
+
 /* =====================================
    ADMIN LAYOUT
 ===================================== */
+
 function AdminLayout({
   children,
   title,
@@ -266,15 +330,21 @@ function AdminLayout({
   subtitle?: string;
 }) {
   const navigate = useNavigate();
+
   const [loggingOut, setLoggingOut] = useState(false);
+
   const logout = async () => {
     setLoggingOut(true);
+
     try {
       await adminLogout();
     } finally {
-      navigate("/admin/login", { replace: true });
+      navigate("/admin/login", {
+        replace: true,
+      });
     }
   };
+
   return (
     <AdminGuard>
       <PageTransition>
@@ -284,42 +354,56 @@ function AdminLayout({
               <div className="admin-logo">
                 AR
               </div>
+
               <div>
                 <strong>Al Rahamat</strong>
                 <span>Hotel Admin</span>
               </div>
             </div>
+
             <AdminNavigation />
+
             <div className="admin-sidebar-bottom">
               <Link to="/">
                 <ChevronLeft size={16} />
                 Hotel website
               </Link>
+
               <button
                 type="button"
                 onClick={logout}
                 disabled={loggingOut}
               >
                 <LogOut size={16} />
-                {loggingOut ? "Signing out..." : "Sign out"}
+                {loggingOut
+                  ? "Signing out..."
+                  : "Sign out"}
               </button>
             </div>
           </aside>
+
           <div className="admin-main">
             <header className="admin-topbar">
               <div>
                 <span className="eyebrow">
                   AL RAHAMAT HOTEL
                 </span>
+
                 <h1>{title}</h1>
+
                 {subtitle && <p>{subtitle}</p>}
               </div>
+
               <div className="admin-topbar-actions">
-                <Link to="/" className="admin-site-link">
+                <Link
+                  to="/"
+                  className="admin-site-link"
+                >
                   View website
                 </Link>
               </div>
             </header>
+
             <main className="admin-content">
               {children}
             </main>
@@ -329,9 +413,11 @@ function AdminLayout({
     </AdminGuard>
   );
 }
+
 /* =====================================
    STAT CARD
 ===================================== */
+
 function StatCard({
   label,
   value,
@@ -347,29 +433,44 @@ function StatCard({
     <div className="admin-stat-card">
       <div className="admin-stat-top">
         <span>{label}</span>
-        <div className="admin-stat-icon">{icon}</div>
+
+        <div className="admin-stat-icon">
+          {icon}
+        </div>
       </div>
+
       <strong>{value}</strong>
+
       {detail && <small>{detail}</small>}
     </div>
   );
 }
+
 /* =====================================
    DASHBOARD
 ===================================== */
+
 export function AdminDashboard() {
-  const [stats, setStats] = useState<AdminStats | null>(null);
-  const [bookings, setBookings] = useState<BookingWithRoom[]>([]);
+  const [stats, setStats] =
+    useState<AdminStats | null>(null);
+
+  const [bookings, setBookings] =
+    useState<BookingWithRoom[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
   const loadDashboard = async () => {
     setLoading(true);
     setError("");
+
     try {
-      const [statsData, bookingData] = await Promise.all([
-        getAdminStats(),
-        getAdminBookings(),
-      ]);
+      const [statsData, bookingData] =
+        await Promise.all([
+          getAdminStats(),
+          getAdminBookings(),
+        ]);
+
       setStats(statsData);
       setBookings(bookingData);
     } catch (err) {
@@ -382,9 +483,11 @@ export function AdminDashboard() {
       setLoading(false);
     }
   };
+
   useEffect(() => {
     loadDashboard();
   }, []);
+
   if (loading) {
     return (
       <AdminLayout
@@ -395,22 +498,21 @@ export function AdminDashboard() {
       </AdminLayout>
     );
   }
+
   if (error) {
     return (
       <AdminLayout title="Dashboard">
         <ErrorState
           title="Dashboard unavailable"
-          text={error}
-          action={
-            <Button onClick={loadDashboard}>
-              Try again
-            </Button>
-          }
+          message={error}
+          onRetry={loadDashboard}
         />
       </AdminLayout>
     );
   }
+
   const recentBookings = bookings.slice(0, 6);
+
   return (
     <AdminLayout
       title="Dashboard"
@@ -426,51 +528,67 @@ export function AdminDashboard() {
           Refresh
         </button>
       </div>
+
       <section className="admin-stat-grid">
         <StatCard
           label="Total rooms"
-          value={stats?.totalRooms ?? 0}
+          value={stats?.total_rooms ?? 0}
           icon={<DoorOpen size={20} />}
         />
+
         <StatCard
           label="Available rooms"
-          value={stats?.availableRooms ?? 0}
+          value={stats?.available_rooms ?? 0}
           icon={<CheckCircle2 size={20} />}
         />
+
         <StatCard
           label="Occupied rooms"
-          value={stats?.occupiedRooms ?? 0}
+          value={stats?.occupied_rooms ?? 0}
           icon={<Users size={20} />}
         />
+
         <StatCard
           label="Pending bookings"
-          value={stats?.pendingBookings ?? 0}
+          value={stats?.pending_bookings ?? 0}
           icon={<ClipboardList size={20} />}
         />
+
         <StatCard
           label="Today's check-ins"
-          value={stats?.todayCheckIns ?? 0}
+          value={stats?.today_check_ins ?? 0}
           icon={<LogIn size={20} />}
         />
+
         <StatCard
           label="Today's check-outs"
-          value={stats?.todayCheckOuts ?? 0}
+          value={stats?.today_check_outs ?? 0}
           icon={<LogOut size={20} />}
         />
+
         <StatCard
           label="Today's revenue"
           value={formatCurrency(
-            stats?.todayRevenue ?? 0
+            stats?.today_revenue ?? 0
           )}
-          icon={<span className="rupee-symbol">₹</span>}
+          icon={
+            <span className="rupee-symbol">
+              ₹
+            </span>
+          }
         />
       </section>
+
       <section className="admin-panel">
         <div className="admin-panel-header">
           <div>
-            <span className="eyebrow">RECENT RESERVATIONS</span>
+            <span className="eyebrow">
+              RECENT RESERVATIONS
+            </span>
+
             <h2>Latest bookings</h2>
           </div>
+
           <Link
             className="admin-panel-link"
             to="/admin/bookings"
@@ -479,10 +597,11 @@ export function AdminDashboard() {
             <ChevronRight size={16} />
           </Link>
         </div>
+
         {recentBookings.length === 0 ? (
           <EmptyState
             title="No bookings yet"
-            text="New reservations will appear here."
+            message="New reservations will appear here."
           />
         ) : (
           <BookingTable
@@ -494,9 +613,11 @@ export function AdminDashboard() {
     </AdminLayout>
   );
 }
+
 /* =====================================
    BOOKING TABLE
 ===================================== */
+
 function BookingTable({
   bookings,
   compact = false,
@@ -506,16 +627,21 @@ function BookingTable({
   compact?: boolean;
   onChanged?: () => void;
 }) {
-  const [updating, setUpdating] = useState<string | null>(
-    null
-  );
+  const [updating, setUpdating] =
+    useState<string | null>(null);
+
   const changeStatus = async (
     booking: BookingWithRoom,
     status: BookingStatus
   ) => {
     setUpdating(booking.id);
+
     try {
-      await updateBookingStatus(booking.id, status);
+      await updateBookingStatus(
+        booking.id,
+        status
+      );
+
       onChanged?.();
     } catch (err) {
       window.alert(
@@ -527,13 +653,19 @@ function BookingTable({
       setUpdating(null);
     }
   };
+
   const changePayment = async (
     booking: BookingWithRoom,
     status: PaymentStatus
   ) => {
     setUpdating(booking.id);
+
     try {
-      await updatePaymentStatus(booking.id, status);
+      await updatePaymentStatus(
+        booking.id,
+        status
+      );
+
       onChanged?.();
     } catch (err) {
       window.alert(
@@ -545,6 +677,7 @@ function BookingTable({
       setUpdating(null);
     }
   };
+
   return (
     <div className="admin-table-wrapper">
       <table className="admin-table">
@@ -554,58 +687,89 @@ function BookingTable({
             <th>Guest</th>
             <th>Stay</th>
             <th>Room</th>
+
             {!compact && <th>Guests</th>}
             {!compact && <th>Amount</th>}
+
             <th>Status</th>
+
             {!compact && <th>Payment</th>}
             {!compact && <th>Actions</th>}
           </tr>
         </thead>
+
         <tbody>
           {bookings.map((booking) => (
             <tr key={booking.id}>
               <td>
-                <strong>{booking.booking_code}</strong>
+                <strong>
+                  {booking.booking_code}
+                </strong>
+
                 <small>
-                  {formatDate(booking.created_at?.split("T")[0] || "")}
+                  {formatDate(
+                    booking.created_at?.split(
+                      "T"
+                    )[0] || ""
+                  )}
                 </small>
               </td>
+
               <td>
                 <strong>
                   {booking.guest_first_name}{" "}
                   {booking.guest_last_name}
                 </strong>
+
                 <small>{booking.phone}</small>
                 <small>{booking.email}</small>
               </td>
+
               <td>
                 <strong>
-                  {formatDate(booking.check_in)}
+                  {formatDate(
+                    booking.check_in
+                  )}
                 </strong>
+
                 <small>
-                  → {formatDate(booking.check_out)}
+                  →{" "}
+                  {formatDate(
+                    booking.check_out
+                  )}
                 </small>
               </td>
+
               <td>
                 <strong>
-                  {booking.room?.name || "Room"}
+                  {booking.room?.name ||
+                    "Room"}
                 </strong>
+
                 <small>
                   {booking.rooms_count} room
-                  {booking.rooms_count > 1 ? "s" : ""}
+                  {booking.rooms_count > 1
+                    ? "s"
+                    : ""}
                 </small>
-                <small>{booking.bed_type}</small>
+
+                <small>
+                  {booking.bed_type}
+                </small>
               </td>
+
               {!compact && (
                 <td>
                   <strong>
                     {booking.adults} adults
                   </strong>
+
                   <small>
                     {booking.children} children
                   </small>
                 </td>
               )}
+
               {!compact && (
                 <td>
                   <strong>
@@ -615,19 +779,29 @@ function BookingTable({
                   </strong>
                 </td>
               )}
+
               <td>
                 <span
-                  className={statusClass(booking.status)}
+                  className={statusClass(
+                    booking.status
+                  )}
                 >
-                  {formatStatus(booking.status)}
+                  {formatStatus(
+                    booking.status
+                  )}
                 </span>
               </td>
+
               {!compact && (
                 <td>
                   <select
                     className="admin-select small"
-                    value={booking.payment_status}
-                    disabled={updating === booking.id}
+                    value={
+                      booking.payment_status
+                    }
+                    disabled={
+                      updating === booking.id
+                    }
                     onChange={(event) =>
                       changePayment(
                         booking,
@@ -639,22 +813,32 @@ function BookingTable({
                     <option value="pending">
                       Pending
                     </option>
-                    <option value="paid">Paid</option>
+
+                    <option value="paid">
+                      Paid
+                    </option>
+
                     <option value="failed">
                       Failed
                     </option>
+
                     <option value="refunded">
                       Refunded
                     </option>
                   </select>
                 </td>
               )}
+
               {!compact && (
                 <td>
                   <BookingActions
                     booking={booking}
-                    updating={updating === booking.id}
-                    onStatusChange={changeStatus}
+                    updating={
+                      updating === booking.id
+                    }
+                    onStatusChange={
+                      changeStatus
+                    }
                   />
                 </td>
               )}
@@ -665,9 +849,11 @@ function BookingTable({
     </div>
   );
 }
+
 /* =====================================
    BOOKING ACTIONS
 ===================================== */
+
 function BookingActions({
   booking,
   updating,
@@ -681,11 +867,21 @@ function BookingActions({
   ) => void;
 }) {
   if (booking.status === "cancelled") {
-    return <span className="muted-text">Cancelled</span>;
+    return (
+      <span className="muted-text">
+        Cancelled
+      </span>
+    );
   }
+
   if (booking.status === "checked_out") {
-    return <span className="muted-text">Completed</span>;
+    return (
+      <span className="muted-text">
+        Completed
+      </span>
+    );
   }
+
   return (
     <div className="admin-action-buttons">
       {booking.status === "pending" && (
@@ -695,18 +891,25 @@ function BookingActions({
             className="action-confirm"
             disabled={updating}
             onClick={() =>
-              onStatusChange(booking, "confirmed")
+              onStatusChange(
+                booking,
+                "confirmed"
+              )
             }
             title="Confirm booking"
           >
             <Check size={15} />
           </button>
+
           <button
             type="button"
             className="action-cancel"
             disabled={updating}
             onClick={() =>
-              onStatusChange(booking, "cancelled")
+              onStatusChange(
+                booking,
+                "cancelled"
+              )
             }
             title="Cancel booking"
           >
@@ -714,6 +917,7 @@ function BookingActions({
           </button>
         </>
       )}
+
       {booking.status === "confirmed" && (
         <>
           <button
@@ -721,19 +925,26 @@ function BookingActions({
             className="action-primary"
             disabled={updating}
             onClick={() =>
-              onStatusChange(booking, "checked_in")
+              onStatusChange(
+                booking,
+                "checked_in"
+              )
             }
             title="Check in"
           >
             <LogIn size={15} />
             Check-in
           </button>
+
           <button
             type="button"
             className="action-cancel"
             disabled={updating}
             onClick={() =>
-              onStatusChange(booking, "cancelled")
+              onStatusChange(
+                booking,
+                "cancelled"
+              )
             }
             title="Cancel booking"
           >
@@ -741,13 +952,17 @@ function BookingActions({
           </button>
         </>
       )}
+
       {booking.status === "checked_in" && (
         <button
           type="button"
           className="action-primary"
           disabled={updating}
           onClick={() =>
-            onStatusChange(booking, "checked_out")
+            onStatusChange(
+              booking,
+              "checked_out"
+            )
           }
           title="Check out"
         >
@@ -758,21 +973,27 @@ function BookingActions({
     </div>
   );
 }
+
 /* =====================================
    ADMIN BOOKINGS
 ===================================== */
+
 export function AdminBookings() {
-  const [bookings, setBookings] = useState<BookingWithRoom[]>(
-    []
-  );
+  const [bookings, setBookings] =
+    useState<BookingWithRoom[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
   const [search, setSearch] = useState("");
+
   const [statusFilter, setStatusFilter] =
     useState<"all" | BookingStatus>("all");
+
   const loadBookings = async () => {
     setLoading(true);
     setError("");
+
     try {
       const data = await getAdminBookings();
       setBookings(data);
@@ -786,17 +1007,29 @@ export function AdminBookings() {
       setLoading(false);
     }
   };
+
   useEffect(() => {
     loadBookings();
   }, []);
+
   const filteredBookings = useMemo(() => {
-    const query = search.trim().toLowerCase();
+    const query = search
+      .trim()
+      .toLowerCase();
+
     return bookings.filter((booking) => {
       const matchesStatus =
         statusFilter === "all" ||
         booking.status === statusFilter;
-      if (!matchesStatus) return false;
-      if (!query) return true;
+
+      if (!matchesStatus) {
+        return false;
+      }
+
+      if (!query) {
+        return true;
+      }
+
       const searchable = [
         booking.booking_code,
         booking.guest_first_name,
@@ -807,9 +1040,15 @@ export function AdminBookings() {
       ]
         .join(" ")
         .toLowerCase();
+
       return searchable.includes(query);
     });
-  }, [bookings, search, statusFilter]);
+  }, [
+    bookings,
+    search,
+    statusFilter,
+  ]);
+
   return (
     <AdminLayout
       title="Bookings"
@@ -818,6 +1057,7 @@ export function AdminBookings() {
       <div className="admin-toolbar">
         <div className="admin-search">
           <Search size={17} />
+
           <input
             type="search"
             placeholder="Search booking, guest, phone..."
@@ -827,6 +1067,7 @@ export function AdminBookings() {
             }
           />
         </div>
+
         <select
           className="admin-select"
           value={statusFilter}
@@ -838,17 +1079,31 @@ export function AdminBookings() {
             )
           }
         >
-          <option value="all">All statuses</option>
-          <option value="pending">Pending</option>
-          <option value="confirmed">Confirmed</option>
+          <option value="all">
+            All statuses
+          </option>
+
+          <option value="pending">
+            Pending
+          </option>
+
+          <option value="confirmed">
+            Confirmed
+          </option>
+
           <option value="checked_in">
             Checked-in
           </option>
+
           <option value="checked_out">
             Checked-out
           </option>
-          <option value="cancelled">Cancelled</option>
+
+          <option value="cancelled">
+            Cancelled
+          </option>
         </select>
+
         <button
           type="button"
           className="admin-refresh"
@@ -858,34 +1113,35 @@ export function AdminBookings() {
           Refresh
         </button>
       </div>
+
       <section className="admin-panel">
         <div className="admin-panel-header">
           <div>
             <span className="eyebrow">
               RESERVATION MANAGEMENT
             </span>
+
             <h2>
               {filteredBookings.length} booking
-              {filteredBookings.length !== 1 ? "s" : ""}
+              {filteredBookings.length !== 1
+                ? "s"
+                : ""}
             </h2>
           </div>
         </div>
+
         {loading ? (
           <LoadingState text="Loading bookings..." />
         ) : error ? (
           <ErrorState
             title="Bookings unavailable"
-            text={error}
-            action={
-              <Button onClick={loadBookings}>
-                Try again
-              </Button>
-            }
+            message={error}
+            onRetry={loadBookings}
           />
         ) : filteredBookings.length === 0 ? (
           <EmptyState
             title="No bookings found"
-            text="Try changing your search or status filter."
+            message="Try changing your search or status filter."
           />
         ) : (
           <BookingTable
@@ -897,9 +1153,11 @@ export function AdminBookings() {
     </AdminLayout>
   );
 }
+
 /* =====================================
    ROOM STATUS
 ===================================== */
+
 function RoomStatusSelect({
   room,
   onChanged,
@@ -907,13 +1165,20 @@ function RoomStatusSelect({
   room: RoomUnit;
   onChanged: () => void;
 }) {
-  const [updating, setUpdating] = useState(false);
+  const [updating, setUpdating] =
+    useState(false);
+
   const handleChange = async (
     status: RoomStatus
   ) => {
     setUpdating(true);
+
     try {
-      await updateRoomStatus(room.id, status);
+      await updateRoomStatus(
+        room.id,
+        status
+      );
+
       onChanged();
     } catch (err) {
       window.alert(
@@ -925,6 +1190,7 @@ function RoomStatusSelect({
       setUpdating(false);
     }
   };
+
   return (
     <select
       className="admin-select small"
@@ -936,18 +1202,29 @@ function RoomStatusSelect({
         )
       }
     >
-      <option value="available">Available</option>
-      <option value="occupied">Occupied</option>
-      <option value="cleaning">Cleaning</option>
+      <option value="available">
+        Available
+      </option>
+
+      <option value="occupied">
+        Occupied
+      </option>
+
+      <option value="cleaning">
+        Cleaning
+      </option>
+
       <option value="maintenance">
         Maintenance
       </option>
     </select>
   );
 }
+
 /* =====================================
    ROOM ASSIGNMENT
 ===================================== */
+
 function RoomAssignmentControl({
   booking,
   rooms,
@@ -959,26 +1236,37 @@ function RoomAssignmentControl({
   assignments: RoomAssignment[];
   onChanged: () => void;
 }) {
-  const [updating, setUpdating] = useState(false);
+  const [updating, setUpdating] =
+    useState(false);
+
   const assigned = assignments.filter(
     (assignment) =>
       assignment.booking_id === booking.id
   );
+
   const availableRooms = rooms.filter(
     (room) =>
       room.status === "available" ||
       assigned.some(
         (assignment) =>
-          assignment.room_unit_id === room.id
+          assignment.room_unit_id ===
+          room.id
       )
   );
+
   const handleAssign = async (
     roomId: string
   ) => {
     if (!roomId) return;
+
     setUpdating(true);
+
     try {
-      await assignRoom(booking.id, roomId);
+      await assignRoom(
+        booking.id,
+        roomId
+      );
+
       onChanged();
     } catch (err) {
       window.alert(
@@ -990,15 +1278,18 @@ function RoomAssignmentControl({
       setUpdating(false);
     }
   };
+
   const handleRemove = async (
     roomId: string
   ) => {
     setUpdating(true);
+
     try {
       await removeRoomAssignment(
         booking.id,
         roomId
       );
+
       onChanged();
     } catch (err) {
       window.alert(
@@ -1010,42 +1301,62 @@ function RoomAssignmentControl({
       setUpdating(false);
     }
   };
+
   return (
     <div className="room-assignment">
       <div className="assigned-room-list">
-        {assigned.map((assignment) => (
-          <span
-            className="assigned-room"
-            key={assignment.room_unit_id}
-          >
-            Room {assignment.room_number}
-            <button
-              type="button"
-              disabled={updating}
-              onClick={() =>
-                handleRemove(
-                  assignment.room_unit_id
-                )
+        {assigned.map((assignment) => {
+          const assignedRoom =
+            rooms.find(
+              (room) =>
+                room.id ===
+                assignment.room_unit_id
+            );
+
+          return (
+            <span
+              className="assigned-room"
+              key={
+                assignment.room_unit_id
               }
-              title="Remove room"
             >
-              <X size={13} />
-            </button>
-          </span>
-        ))}
+              Room{" "}
+              {assignedRoom?.room_number ||
+                assignment.room_unit_id}
+
+              <button
+                type="button"
+                disabled={updating}
+                onClick={() =>
+                  handleRemove(
+                    assignment.room_unit_id
+                  )
+                }
+                title="Remove room"
+              >
+                <X size={13} />
+              </button>
+            </span>
+          );
+        })}
       </div>
-      {assigned.length < booking.rooms_count && (
+
+      {assigned.length <
+        booking.rooms_count && (
         <select
           className="admin-select small"
           disabled={updating}
           value=""
           onChange={(event) =>
-            handleAssign(event.target.value)
+            handleAssign(
+              event.target.value
+            )
           }
         >
           <option value="">
             Assign room...
           </option>
+
           {availableRooms
             .filter(
               (room) =>
@@ -1068,22 +1379,30 @@ function RoomAssignmentControl({
     </div>
   );
 }
+
 /* =====================================
    ADMIN ROOMS
 ===================================== */
+
 export function AdminRooms() {
-  const [rooms, setRooms] = useState<RoomUnit[]>([]);
-  const [bookings, setBookings] = useState<
-    BookingWithRoom[]
-  >([]);
-  const [assignments, setAssignments] = useState<
-    RoomAssignment[]
-  >([]);
-  const [loading, setLoading] = useState(true);
+  const [rooms, setRooms] =
+    useState<RoomUnit[]>([]);
+
+  const [bookings, setBookings] =
+    useState<BookingWithRoom[]>([]);
+
+  const [assignments, setAssignments] =
+    useState<RoomAssignment[]>([]);
+
+  const [loading, setLoading] =
+    useState(true);
+
   const [error, setError] = useState("");
+
   const loadRooms = async () => {
     setLoading(true);
     setError("");
+
     try {
       const [
         roomData,
@@ -1094,6 +1413,7 @@ export function AdminRooms() {
         getAdminBookings(),
         getRoomAssignments(),
       ]);
+
       setRooms(roomData);
       setBookings(bookingData);
       setAssignments(assignmentData);
@@ -1107,26 +1427,37 @@ export function AdminRooms() {
       setLoading(false);
     }
   };
+
   useEffect(() => {
     loadRooms();
   }, []);
+
   const activeBookings = bookings.filter(
     (booking) =>
       booking.status === "confirmed" ||
       booking.status === "checked_in"
   );
+
   const availableCount = rooms.filter(
-    (room) => room.status === "available"
+    (room) =>
+      room.status === "available"
   ).length;
+
   const occupiedCount = rooms.filter(
-    (room) => room.status === "occupied"
+    (room) =>
+      room.status === "occupied"
   ).length;
+
   const cleaningCount = rooms.filter(
-    (room) => room.status === "cleaning"
+    (room) =>
+      room.status === "cleaning"
   ).length;
+
   const maintenanceCount = rooms.filter(
-    (room) => room.status === "maintenance"
+    (room) =>
+      room.status === "maintenance"
   ).length;
+
   return (
     <AdminLayout
       title="Rooms"
@@ -1136,35 +1467,37 @@ export function AdminRooms() {
         <StatCard
           label="Available"
           value={availableCount}
-          icon={<CheckCircle2 size={20} />}
+          icon={
+            <CheckCircle2 size={20} />
+          }
         />
+
         <StatCard
           label="Occupied"
           value={occupiedCount}
           icon={<Users size={20} />}
         />
+
         <StatCard
           label="Cleaning"
           value={cleaningCount}
           icon={<RefreshCw size={20} />}
         />
+
         <StatCard
           label="Maintenance"
           value={maintenanceCount}
           icon={<Settings size={20} />}
         />
       </div>
+
       {loading ? (
         <LoadingState text="Loading rooms..." />
       ) : error ? (
         <ErrorState
           title="Rooms unavailable"
-          text={error}
-          action={
-            <Button onClick={loadRooms}>
-              Try again
-            </Button>
-          }
+          message={error}
+          onRetry={loadRooms}
         />
       ) : (
         <>
@@ -1174,8 +1507,10 @@ export function AdminRooms() {
                 <span className="eyebrow">
                   ROOM INVENTORY
                 </span>
+
                 <h2>All rooms</h2>
               </div>
+
               <button
                 type="button"
                 className="admin-refresh"
@@ -1185,105 +1520,143 @@ export function AdminRooms() {
                 Refresh
               </button>
             </div>
-            <div className="room-grid-admin">
-              {rooms.map((room) => {
-                const assignedBooking =
-                  assignments.find(
-                    (assignment) =>
-                      assignment.room_unit_id ===
-                      room.id
-                  );
-                return (
-                  <article
-                    className="admin-room-card"
-                    key={room.id}
-                  >
-                    <div className="admin-room-top">
-                      <div>
-                        <span className="eyebrow">
-                          {room.room_type_name}
+
+            {rooms.length === 0 ? (
+              <EmptyState
+                title="No rooms found"
+                message="Add room units in Supabase to manage them here."
+              />
+            ) : (
+              <div className="room-grid-admin">
+                {rooms.map((room) => {
+                  const assignedBooking =
+                    assignments.find(
+                      (assignment) =>
+                        assignment.room_unit_id ===
+                        room.id
+                    );
+
+                  return (
+                    <article
+                      className="admin-room-card"
+                      key={room.id}
+                    >
+                      <div className="admin-room-top">
+                        <div>
+                          <span className="eyebrow">
+                            {room.room?.name ||
+                              "ROOM"}
+                          </span>
+
+                          <h3>
+                            Room{" "}
+                            {room.room_number}
+                          </h3>
+                        </div>
+
+                        <span
+                          className={statusClass(
+                            room.status
+                          )}
+                        >
+                          {formatStatus(
+                            room.status
+                          )}
                         </span>
-                        <h3>
-                          Room {room.room_number}
-                        </h3>
                       </div>
-                      <span
-                        className={statusClass(
-                          room.status
+
+                      <div className="admin-room-meta">
+                        {room.room?.slug && (
+                          <span>
+                            {room.room.slug}
+                          </span>
                         )}
-                      >
-                        {formatStatus(room.status)}
-                      </span>
-                    </div>
-                    <div className="admin-room-meta">
-                      <span>
-                        Floor {room.floor}
-                      </span>
-                      {assignedBooking && (
-                        <span>
-                          Booking{" "}
-                          {
-                            assignedBooking.booking_code
-                          }
-                        </span>
-                      )}
-                    </div>
-                    <RoomStatusSelect
-                      room={room}
-                      onChanged={loadRooms}
-                    />
-                  </article>
-                );
-              })}
-            </div>
+
+                        {assignedBooking && (
+                          <span>
+                            Booking{" "}
+                            {assignedBooking.booking_code}
+                          </span>
+                        )}
+                      </div>
+
+                      <RoomStatusSelect
+                        room={room}
+                        onChanged={loadRooms}
+                      />
+                    </article>
+                  );
+                })}
+              </div>
+            )}
           </section>
+
           <section className="admin-panel">
             <div className="admin-panel-header">
               <div>
                 <span className="eyebrow">
                   ROOM ASSIGNMENTS
                 </span>
-                <h2>Active reservations</h2>
+
+                <h2>
+                  Active reservations
+                </h2>
               </div>
             </div>
+
             {activeBookings.length === 0 ? (
               <EmptyState
                 title="No active reservations"
-                text="Confirmed and checked-in bookings will appear here."
+                message="Confirmed and checked-in bookings will appear here."
               />
             ) : (
               <div className="assignment-table">
-                {activeBookings.map((booking) => (
-                  <div
-                    className="assignment-row"
-                    key={booking.id}
-                  >
-                    <div>
-                      <strong>
-                        {booking.booking_code}
-                      </strong>
-                      <span>
-                        {booking.guest_first_name}{" "}
-                        {booking.guest_last_name}
-                      </span>
-                      <small>
-                        {formatDate(
-                          booking.check_in
-                        )}{" "}
-                        →{" "}
-                        {formatDate(
-                          booking.check_out
-                        )}
-                      </small>
+                {activeBookings.map(
+                  (booking) => (
+                    <div
+                      className="assignment-row"
+                      key={booking.id}
+                    >
+                      <div>
+                        <strong>
+                          {
+                            booking.booking_code
+                          }
+                        </strong>
+
+                        <span>
+                          {
+                            booking.guest_first_name
+                          }{" "}
+                          {
+                            booking.guest_last_name
+                          }
+                        </span>
+
+                        <small>
+                          {formatDate(
+                            booking.check_in
+                          )}{" "}
+                          →{" "}
+                          {formatDate(
+                            booking.check_out
+                          )}
+                        </small>
+                      </div>
+
+                      <RoomAssignmentControl
+                        booking={booking}
+                        rooms={rooms}
+                        assignments={
+                          assignments
+                        }
+                        onChanged={
+                          loadRooms
+                        }
+                      />
                     </div>
-                    <RoomAssignmentControl
-                      booking={booking}
-                      rooms={rooms}
-                      assignments={assignments}
-                      onChanged={loadRooms}
-                    />
-                  </div>
-                ))}
+                  )
+                )}
               </div>
             )}
           </section>
@@ -1292,9 +1665,11 @@ export function AdminRooms() {
     </AdminLayout>
   );
 }
+
 /* =====================================
    CALENDAR HELPERS
 ===================================== */
+
 function getMonthStart(date: Date) {
   return new Date(
     date.getFullYear(),
@@ -1302,6 +1677,7 @@ function getMonthStart(date: Date) {
     1
   );
 }
+
 function getMonthEnd(date: Date) {
   return new Date(
     date.getFullYear(),
@@ -1309,16 +1685,21 @@ function getMonthEnd(date: Date) {
     0
   );
 }
+
 function dateKey(date: Date) {
   const year = date.getFullYear();
+
   const month = String(
     date.getMonth() + 1
   ).padStart(2, "0");
+
   const day = String(
     date.getDate()
   ).padStart(2, "0");
+
   return `${year}-${month}-${day}`;
 }
+
 function monthLabel(date: Date) {
   return date.toLocaleDateString(
     "en-IN",
@@ -1328,27 +1709,39 @@ function monthLabel(date: Date) {
     }
   );
 }
+
 /* =====================================
    ADMIN CALENDAR
 ===================================== */
+
 export function AdminCalendar() {
   const [currentMonth, setCurrentMonth] =
     useState(() => new Date());
-  const [bookings, setBookings] = useState<
-    BookingWithRoom[]
-  >([]);
-  const [rooms, setRooms] = useState<RoomUnit[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  const [bookings, setBookings] =
+    useState<BookingWithRoom[]>([]);
+
+  const [rooms, setRooms] =
+    useState<RoomUnit[]>([]);
+
+  const [loading, setLoading] =
+    useState(true);
+
   const [error, setError] = useState("");
+
   const loadCalendar = async () => {
     setLoading(true);
     setError("");
+
     try {
-      const [bookingData, roomData] =
-        await Promise.all([
-          getAdminBookings(),
-          getRoomUnits(),
-        ]);
+      const [
+        bookingData,
+        roomData,
+      ] = await Promise.all([
+        getAdminBookings(),
+        getRoomUnits(),
+      ]);
+
       setBookings(bookingData);
       setRooms(roomData);
     } catch (err) {
@@ -1361,17 +1754,32 @@ export function AdminCalendar() {
       setLoading(false);
     }
   };
+
   useEffect(() => {
     loadCalendar();
   }, []);
+
   const days = useMemo(() => {
-    const start = getMonthStart(currentMonth);
-    const end = getMonthEnd(currentMonth);
+    const start =
+      getMonthStart(currentMonth);
+
+    const end =
+      getMonthEnd(currentMonth);
+
     const firstDay = start.getDay();
-    const result: Array<Date | null> = [];
-    for (let i = 0; i < firstDay; i++) {
+
+    const result: Array<
+      Date | null
+    > = [];
+
+    for (
+      let i = 0;
+      i < firstDay;
+      i++
+    ) {
       result.push(null);
     }
+
     for (
       let day = 1;
       day <= end.getDate();
@@ -1385,22 +1793,33 @@ export function AdminCalendar() {
         )
       );
     }
+
     return result;
   }, [currentMonth]);
-  const activeBookings = bookings.filter(
-    (booking) =>
-      booking.status !== "cancelled" &&
-      booking.status !== "checked_out"
-  );
-  const getDayBookings = (date: Date) => {
+
+  const activeBookings =
+    bookings.filter(
+      (booking) =>
+        booking.status !==
+          "cancelled" &&
+        booking.status !==
+          "checked_out"
+    );
+
+  const getDayBookings = (
+    date: Date
+  ) => {
     const key = dateKey(date);
+
     return activeBookings.filter(
       (booking) =>
         key >= booking.check_in &&
         key < booking.check_out
     );
   };
+
   const totalRoomCount = rooms.length;
+
   return (
     <AdminLayout
       title="Calendar"
@@ -1414,7 +1833,8 @@ export function AdminCalendar() {
             setCurrentMonth(
               new Date(
                 currentMonth.getFullYear(),
-                currentMonth.getMonth() - 1,
+                currentMonth.getMonth() -
+                  1,
                 1
               )
             )
@@ -1422,7 +1842,11 @@ export function AdminCalendar() {
         >
           <ChevronLeft size={18} />
         </button>
-        <h2>{monthLabel(currentMonth)}</h2>
+
+        <h2>
+          {monthLabel(currentMonth)}
+        </h2>
+
         <button
           type="button"
           className="calendar-nav"
@@ -1430,7 +1854,8 @@ export function AdminCalendar() {
             setCurrentMonth(
               new Date(
                 currentMonth.getFullYear(),
-                currentMonth.getMonth() + 1,
+                currentMonth.getMonth() +
+                  1,
                 1
               )
             )
@@ -1438,6 +1863,7 @@ export function AdminCalendar() {
         >
           <ChevronRight size={18} />
         </button>
+
         <button
           type="button"
           className="admin-refresh"
@@ -1447,17 +1873,14 @@ export function AdminCalendar() {
           Refresh
         </button>
       </div>
+
       {loading ? (
         <LoadingState text="Loading calendar..." />
       ) : error ? (
         <ErrorState
           title="Calendar unavailable"
-          text={error}
-          action={
-            <Button onClick={loadCalendar}>
-              Try again
-            </Button>
-          }
+          message={error}
+          onRetry={loadCalendar}
         />
       ) : (
         <section className="admin-panel calendar-panel">
@@ -1471,106 +1894,141 @@ export function AdminCalendar() {
               "Fri",
               "Sat",
             ].map((day) => (
-              <span key={day}>{day}</span>
+              <span key={day}>
+                {day}
+              </span>
             ))}
           </div>
+
           <div className="calendar-grid">
-            {days.map((date, index) => {
-              if (!date) {
+            {days.map(
+              (date, index) => {
+                if (!date) {
+                  return (
+                    <div
+                      className="calendar-day empty"
+                      key={`empty-${index}`}
+                    />
+                  );
+                }
+
+                const bookingsForDay =
+                  getDayBookings(date);
+
+                const occupancy =
+                  totalRoomCount > 0
+                    ? Math.min(
+                        100,
+                        Math.round(
+                          (bookingsForDay.reduce(
+                            (
+                              sum,
+                              booking
+                            ) =>
+                              sum +
+                              booking.rooms_count,
+                            0
+                          ) /
+                            totalRoomCount) *
+                            100
+                        )
+                      )
+                    : 0;
+
+                const isToday =
+                  dateKey(date) ===
+                  dateKey(new Date());
+
                 return (
                   <div
-                    className="calendar-day empty"
-                    key={`empty-${index}`}
-                  />
+                    className={`calendar-day ${
+                      isToday
+                        ? "today"
+                        : ""
+                    }`}
+                    key={dateKey(date)}
+                  >
+                    <div className="calendar-day-header">
+                      <strong>
+                        {date.getDate()}
+                      </strong>
+
+                      <small>
+                        {occupancy}%
+                      </small>
+                    </div>
+
+                    <div className="calendar-occupancy">
+                      <span
+                        style={{
+                          width: `${occupancy}%`,
+                        }}
+                      />
+                    </div>
+
+                    <div className="calendar-bookings">
+                      {bookingsForDay
+                        .slice(0, 3)
+                        .map(
+                          (
+                            booking
+                          ) => (
+                            <Link
+                              key={
+                                booking.id
+                              }
+                              to="/admin/bookings"
+                              className={`calendar-booking ${booking.status}`}
+                            >
+                              <strong>
+                                {
+                                  booking.booking_code
+                                }
+                              </strong>
+
+                              <span>
+                                {
+                                  booking.guest_first_name
+                                }
+                              </span>
+                            </Link>
+                          )
+                        )}
+
+                      {bookingsForDay.length >
+                        3 && (
+                        <small className="calendar-more">
+                          +
+                          {bookingsForDay.length -
+                            3}{" "}
+                          more
+                        </small>
+                      )}
+                    </div>
+                  </div>
                 );
               }
-              const bookingsForDay =
-                getDayBookings(date);
-              const occupancy =
-                totalRoomCount > 0
-                  ? Math.min(
-                      100,
-                      Math.round(
-                        (bookingsForDay.reduce(
-                          (sum, booking) =>
-                            sum +
-                            booking.rooms_count,
-                          0
-                        ) /
-                          totalRoomCount) *
-                          100
-                      )
-                    )
-                  : 0;
-              const isToday =
-                dateKey(date) ===
-                dateKey(new Date());
-              return (
-                <div
-                  className={`calendar-day ${
-                    isToday ? "today" : ""
-                  }`}
-                  key={dateKey(date)}
-                >
-                  <div className="calendar-day-header">
-                    <strong>
-                      {date.getDate()}
-                    </strong>
-                    <small>
-                      {occupancy}%
-                    </small>
-                  </div>
-                  <div className="calendar-occupancy">
-                    <span
-                      style={{
-                        width: `${occupancy}%`,
-                      }}
-                    />
-                  </div>
-                  <div className="calendar-bookings">
-                    {bookingsForDay
-                      .slice(0, 3)
-                      .map((booking) => (
-                        <Link
-                          key={booking.id}
-                          to="/admin/bookings"
-                          className={`calendar-booking ${
-                            booking.status
-                          }`}
-                        >
-                          <strong>
-                            {booking.booking_code}
-                          </strong>
-                          <span>
-                            {booking.guest_first_name}
-                          </span>
-                        </Link>
-                      ))}
-                    {bookingsForDay.length > 3 && (
-                      <small className="calendar-more">
-                        +{bookingsForDay.length - 3} more
-                      </small>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+            )}
           </div>
         </section>
       )}
+
       <section className="admin-panel calendar-legend">
         <div>
           <span className="legend-dot pending" />
           Pending
         </div>
+
         <div>
           <span className="legend-dot confirmed" />
           Confirmed
         </div>
+
         <div>
           <span className="legend-dot checked-in" />
           Checked-in
         </div>
+
         <div>
           <span className="legend-dot checked-out" />
           Checked-out
