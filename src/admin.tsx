@@ -30,7 +30,6 @@ import {
 } from "lucide-react";
 
 import {
-  AdminShell,
   Button,
   EmptyState,
   ErrorState,
@@ -1530,12 +1529,26 @@ export function AdminRooms() {
             ) : (
               <div className="room-grid-admin">
                 {rooms.map((room) => {
-                  const assignedBooking =
+                  /* FIX:
+                     RoomAssignment only contains booking_id.
+                     Find the assignment first, then find the
+                     real BookingWithRoom using booking_id.
+                  */
+                  const assignedAssignment =
                     assignments.find(
                       (assignment) =>
                         assignment.room_unit_id ===
                         room.id
                     );
+
+                  const assignedBooking =
+                    assignedAssignment
+                      ? bookings.find(
+                          (booking) =>
+                            booking.id ===
+                            assignedAssignment.booking_id
+                        )
+                      : undefined;
 
                   return (
                     <article
