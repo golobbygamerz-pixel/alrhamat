@@ -1,0 +1,675 @@
+import { supabase } from "./supabase";
+import type {
+  Booking,
+  BookingSearch,
+  BookingStatus,
+  PaymentStatus,
+  RoomAvailability,
+  Room,
+  RoomStatus
+} from "../types";
+export interface CreateBookingInput {
+  roomId: string;
+  guestFirstName: string;
+  guestLastName: string;
+  phone: string;
+  email: string;
+  checkIn: string;
+  checkOut: string;
+  adults: number;
+  children: number;
+  roomsCount: number;
+  bedType: string;
+  specialRequest?: string;
+}
+export interface CreatedBooking {
+  booking_id: string;
+  booking_code: string;
+  total_amount: number;
+  nights: number;
+}
+export interface AdminStats {
+  total_rooms: number;
+  available_rooms: number;
+  occupied_rooms: number;
+  pending_bookings: number;
+  today_check_ins: number;
+  today_check_outs: number;
+  today_revenue: number;
+}
+export interface BookingWithRoom extends Booking {
+  room?: Room;
+}
+export interface RoomUnit {
+  id: string;
+  room_id: string;
+  room_number: string;
+  status: RoomStatus;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+  room?: Room;
+}
+export interface RoomAssignment {
+  id: string;
+  booking_id: string;
+  room_unit_id: string;
+  created_at: string;
+  room_unit?: RoomUnit;
+}
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "message" in error
+  ) {
+    return String(
+      (error as { message?: unknown }).message ??
+        "Something went wrong."
+    );
+  }
+  return "Something went wrong.";
+}
+/* ============================================================
+   CUSTOMER — ROOM AVAILABILITY
+   ============================================================ */
+export async function getRoomAvailability(
+  search: BookingSearch
+): Promise<RoomAvailability[]> {
+  const { data, error } = await supabase.rpc(
+    "get_room_availability",
+    {
+      p_check_in: search.checkIn,
+      p_check_out: search.checkOut,
+      p_adults: search.adults,
+      p_children: search.children,
+      p_rooms: search.rooms,
+      p_bed_type: search.bedType || null
+    }
+  );
+  if (error) {
+    throw new Error(getErrorMessage(error));
+  }
+  return (data ?? []) as RoomAvailability[];
+}
+/* ============================================================
+   CUSTOMER — CREATE REAL BOOKING
+   ============================================================ */
+export async function createBooking(
+  input: CreateBookingInput
+): Promise<CreatedBooking> {
+  const { data, error } = await supabase.rpc(
+    "create_booking",
+    {
+      p_room_id: input.roomId,
+      p_guest_first_name: input.guestFirstName,
+      p_guest_last_name: input.guestLastName,
+      p_phone: input.phone,
+      p_email: input.email,
+      p_check_in: input.checkIn,
+      p_check_out: input.checkOut,
+      p_adults: input.adults,
+      p_children: input.children,
+      p_rooms_count: input.roomsCount,
+      p_bed_type: input.bedType,
+      p_special_request:
+        input.specialRequest?.trim() || null
+    }
+  );
+  if (error) {
+    throw new Error(getErrorMessage(error));
+  }
+  const booking = Array.isArray(data)
+    ? data[0]
+    : data;
+  if (!booking) {
+    throw new Error(
+      "Booking could not be created. Please try again."
+    );
+  }
+  return {
+    booking_id: String(booking.booking_id),
+    booking_code: String(booking.booking_code),
+    total_amount: Number(booking.total_amount),
+    nights: Number(booking.nights)
+  };
+}
+/* ============================================================
+   CUSTOMER — FIND MY BOOKING
+   Requires booking ID + phone number.
+   ============================================================ */
+export async function findBooking(
+  bookingCode: string,
+  phone: string
+): Promise<Booking | null> {
+  const { data, error } = await supabase.rpc(
+    "find_booking",
+    {
+      p_booking_code: bookingCode.trim(),
+      p_phone: phone.trim()
+    }
+  );
+  if (error) {
+    throw new Error(getErrorMessage(error));
+  }
+  const row = Array.isArray(data)
+    ? data[0]
+    : data;
+  if (!row) {
+    return null;
+  }
+  return {
+    id: String(row.id),
+    booking_code: String(row.booking_code),
+    room_id: String(row.room_id),
+    room: row.room_name
+      ? {
+          id: String(row.room_id),
+          slug: "",
+          name: String(row.room_name),
+          description: "",
+          price_per_night: Number(row.price_per_night),
+          room_size: 0,
+          max_guests: 0,
+          bed_type: row.bed_type,
+          total_units: 0,
+          image_url: String(row.room_image_url ?? ""),
+          gallery: [],
+          amenities: []
+        }
+      : undefined,
+    guest_first_name: String(row.guest_first_name),
+    guest_last_name: String(row.guest_last_name),
+    phone: String(row.phone),
+    email: String(row.email),
+    check_in: String(row.check_in),
+    check_out: String(row.check_out),
+    adults: Number(row.adults),
+    children: Number(row.children),
+    rooms_count: Number(row.rooms_count),
+    bed_type: row.bed_type,
+    special_request:
+      row.special_request ?? undefined,
+    nights: Number(row.nights),
+    price_per_night: Number(row.price_per_night),
+    total_amount: Number(row.total_amount),
+    status: row.status,
+    payment_status: row.payment_status,
+    created_at: String(row.created_at)
+  };
+}
+/* ============================================================
+   CUSTOMER — GET ALL PUBLIC ROOMS
+   ============================================================ */
+export async function getRooms(): Promise<Room[]> {
+  const { data, error } = await supabase
+    .from("rooms")
+    .select("*")
+    .order("price_per_night", {
+      ascending: true
+    });
+  if (error) {
+    throw new Error(getErrorMessage(error));
+  }
+  return (data ?? []).map((room) => ({
+    id: String(room.id),
+    slug: String(room.slug),
+    name: String(room.name),
+    description: String(room.description),
+    price_per_night: Number(
+      room.price_per_night
+    ),
+    room_size: Number(room.room_size),
+    max_guests: Number(room.max_guests),
+    bed_type: room.bed_type,
+    total_units: Number(room.total_units),
+    image_url: String(room.image_url),
+    gallery: Array.isArray(room.gallery)
+      ? room.gallery.map(String)
+      : [],
+    amenities: Array.isArray(room.amenities)
+      ? room.amenities.map(String)
+      : [],
+    created_at: room.created_at
+      ? String(room.created_at)
+      : undefined
+  }));
+}
+/* ============================================================
+   ADMIN — AUTH
+   ============================================================ */
+export async function adminLogin(
+  email: string,
+  password: string
+) {
+  const { data, error } =
+    await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password
+    });
+  if (error) {
+    throw new Error(getErrorMessage(error));
+  }
+  return data;
+}
+export async function adminLogout() {
+  const { error } =
+    await supabase.auth.signOut();
+  if (error) {
+    throw new Error(getErrorMessage(error));
+  }
+}
+export async function getCurrentAdmin() {
+  const {
+    data: { user },
+    error
+  } = await supabase.auth.getUser();
+  if (error) {
+    throw new Error(getErrorMessage(error));
+  }
+  if (!user) {
+    return null;
+  }
+  const { data: admin, error: adminError } =
+    await supabase
+      .from("admin_users")
+      .select("user_id, email")
+      .eq("user_id", user.id)
+      .maybeSingle();
+  if (adminError) {
+    throw new Error(
+      getErrorMessage(adminError)
+    );
+  }
+  if (!admin) {
+    return null;
+  }
+  return {
+    id: user.id,
+    email: String(
+      admin.email ?? user.email ?? ""
+    )
+  };
+}
+/* ============================================================
+   ADMIN — DASHBOARD STATS
+   ============================================================ */
+export async function getAdminStats(): Promise<AdminStats> {
+  const { data, error } =
+    await supabase.rpc("get_admin_stats");
+  if (error) {
+    throw new Error(getErrorMessage(error));
+  }
+  const stats = Array.isArray(data)
+    ? data[0]
+    : data;
+  if (!stats) {
+    return {
+      total_rooms: 0,
+      available_rooms: 0,
+      occupied_rooms: 0,
+      pending_bookings: 0,
+      today_check_ins: 0,
+      today_check_outs: 0,
+      today_revenue: 0
+    };
+  }
+  return {
+    total_rooms: Number(stats.total_rooms),
+    available_rooms: Number(
+      stats.available_rooms
+    ),
+    occupied_rooms: Number(
+      stats.occupied_rooms
+    ),
+    pending_bookings: Number(
+      stats.pending_bookings
+    ),
+    today_check_ins: Number(
+      stats.today_check_ins
+    ),
+    today_check_outs: Number(
+      stats.today_check_outs
+    ),
+    today_revenue: Number(
+      stats.today_revenue
+    )
+  };
+}
+/* ============================================================
+   ADMIN — GET BOOKINGS
+   ============================================================ */
+export async function getAdminBookings(): Promise<
+  BookingWithRoom[]
+> {
+  const { data, error } = await supabase
+    .from("bookings")
+    .select(`
+      *,
+      room:rooms(*)
+    `)
+    .order("created_at", {
+      ascending: false
+    });
+  if (error) {
+    throw new Error(getErrorMessage(error));
+  }
+  return (data ?? []).map((booking) => ({
+    id: String(booking.id),
+    booking_code: String(
+      booking.booking_code
+    ),
+    room_id: String(booking.room_id),
+    room: booking.room
+      ? {
+          id: String(booking.room.id),
+          slug: String(booking.room.slug),
+          name: String(booking.room.name),
+          description: String(
+            booking.room.description
+          ),
+          price_per_night: Number(
+            booking.room.price_per_night
+          ),
+          room_size: Number(
+            booking.room.room_size
+          ),
+          max_guests: Number(
+            booking.room.max_guests
+          ),
+          bed_type: booking.room.bed_type,
+          total_units: Number(
+            booking.room.total_units
+          ),
+          image_url: String(
+            booking.room.image_url
+          ),
+          gallery: Array.isArray(
+            booking.room.gallery
+          )
+            ? booking.room.gallery.map(String)
+            : [],
+          amenities: Array.isArray(
+            booking.room.amenities
+          )
+            ? booking.room.amenities.map(String)
+            : []
+        }
+      : undefined,
+    guest_first_name: String(
+      booking.guest_first_name
+    ),
+    guest_last_name: String(
+      booking.guest_last_name
+    ),
+    phone: String(booking.phone),
+    email: String(booking.email),
+    check_in: String(booking.check_in),
+    check_out: String(booking.check_out),
+    adults: Number(booking.adults),
+    children: Number(booking.children),
+    rooms_count: Number(
+      booking.rooms_count
+    ),
+    bed_type: booking.bed_type,
+    special_request:
+      booking.special_request ??
+      undefined,
+    nights: Number(booking.nights),
+    price_per_night: Number(
+      booking.price_per_night
+    ),
+    total_amount: Number(
+      booking.total_amount
+    ),
+    status: booking.status,
+    payment_status:
+      booking.payment_status,
+    created_at: String(
+      booking.created_at
+    ),
+    updated_at: booking.updated_at
+      ? String(booking.updated_at)
+      : undefined
+  }));
+}
+/* ============================================================
+   ADMIN — UPDATE BOOKING STATUS
+   ============================================================ */
+export async function updateBookingStatus(
+  bookingId: string,
+  status: BookingStatus
+) {
+  const { data, error } =
+    await supabase.rpc(
+      "admin_update_booking_status",
+      {
+        p_booking_id: bookingId,
+        p_status: status
+      }
+    );
+  if (error) {
+    throw new Error(getErrorMessage(error));
+  }
+  return Boolean(data);
+}
+/* ============================================================
+   ADMIN — UPDATE PAYMENT STATUS
+   ============================================================ */
+export async function updatePaymentStatus(
+  bookingId: string,
+  status: PaymentStatus
+) {
+  const { data, error } =
+    await supabase.rpc(
+      "admin_update_payment_status",
+      {
+        p_booking_id: bookingId,
+        p_payment_status: status
+      }
+    );
+  if (error) {
+    throw new Error(getErrorMessage(error));
+  }
+  return Boolean(data);
+}
+/* ============================================================
+   ADMIN — ROOM UNITS
+   ============================================================ */
+export async function getRoomUnits(): Promise<
+  RoomUnit[]
+> {
+  const { data, error } = await supabase
+    .from("room_units")
+    .select(`
+      *,
+      room:rooms(*)
+    `)
+    .order("room_number", {
+      ascending: true
+    });
+  if (error) {
+    throw new Error(getErrorMessage(error));
+  }
+  return (data ?? []).map((unit) => ({
+    id: String(unit.id),
+    room_id: String(unit.room_id),
+    room_number: String(
+      unit.room_number
+    ),
+    status: unit.status,
+    active: Boolean(unit.active),
+    created_at: String(
+      unit.created_at
+    ),
+    updated_at: String(
+      unit.updated_at
+    ),
+    room: unit.room
+      ? {
+          id: String(unit.room.id),
+          slug: String(unit.room.slug),
+          name: String(unit.room.name),
+          description: String(
+            unit.room.description
+          ),
+          price_per_night: Number(
+            unit.room.price_per_night
+          ),
+          room_size: Number(
+            unit.room.room_size
+          ),
+          max_guests: Number(
+            unit.room.max_guests
+          ),
+          bed_type: unit.room.bed_type,
+          total_units: Number(
+            unit.room.total_units
+          ),
+          image_url: String(
+            unit.room.image_url
+          ),
+          gallery: Array.isArray(
+            unit.room.gallery
+          )
+            ? unit.room.gallery.map(String)
+            : [],
+          amenities: Array.isArray(
+            unit.room.amenities
+          )
+            ? unit.room.amenities.map(String)
+            : []
+        }
+      : undefined
+  }));
+}
+/* ============================================================
+   ADMIN — UPDATE PHYSICAL ROOM STATUS
+   ============================================================ */
+export async function updateRoomStatus(
+  roomUnitId: string,
+  status: RoomStatus
+) {
+  const { data, error } =
+    await supabase.rpc(
+      "admin_update_room_status",
+      {
+        p_room_unit_id: roomUnitId,
+        p_status: status
+      }
+    );
+  if (error) {
+    throw new Error(getErrorMessage(error));
+  }
+  return Boolean(data);
+}
+/* ============================================================
+   ADMIN — ASSIGN ROOM NUMBER TO BOOKING
+   ============================================================ */
+export async function assignRoom(
+  bookingId: string,
+  roomUnitId: string
+) {
+  const { data, error } =
+    await supabase.rpc(
+      "admin_assign_room",
+      {
+        p_booking_id: bookingId,
+        p_room_unit_id: roomUnitId
+      }
+    );
+  if (error) {
+    throw new Error(getErrorMessage(error));
+  }
+  return Boolean(data);
+}
+/* ============================================================
+   ADMIN — REMOVE ROOM ASSIGNMENT
+   ============================================================ */
+export async function removeRoomAssignment(
+  bookingId: string,
+  roomUnitId: string
+) {
+  const { data, error } =
+    await supabase.rpc(
+      "admin_remove_room_assignment",
+      {
+        p_booking_id: bookingId,
+        p_room_unit_id: roomUnitId
+      }
+    );
+  if (error) {
+    throw new Error(getErrorMessage(error));
+  }
+  return Boolean(data);
+}
+/* ============================================================
+   ADMIN — GET ROOM ASSIGNMENTS
+   ============================================================ */
+export async function getRoomAssignments(): Promise<
+  RoomAssignment[]
+> {
+  const { data, error } = await supabase
+    .from("booking_room_assignments")
+    .select(`
+      *,
+      room_unit:room_units(
+        *,
+        room:rooms(*)
+      )
+    `)
+    .order("created_at", {
+      ascending: false
+    });
+  if (error) {
+    throw new Error(getErrorMessage(error));
+  }
+  return (data ?? []).map((assignment) => ({
+    id: String(assignment.id),
+    booking_id: String(
+      assignment.booking_id
+    ),
+    room_unit_id: String(
+      assignment.room_unit_id
+    ),
+    created_at: String(
+      assignment.created_at
+    ),
+    room_unit: assignment.room_unit
+      ? {
+          id: String(
+            assignment.room_unit.id
+          ),
+          room_id: String(
+            assignment.room_unit.room_id
+          ),
+          room_number: String(
+            assignment.room_unit.room_number
+          ),
+          status:
+            assignment.room_unit.status,
+          active: Boolean(
+            assignment.room_unit.active
+          ),
+          created_at: String(
+            assignment.room_unit.created_at
+          ),
+          updated_at: String(
+            assignment.room_unit.updated_at
+          )
+        }
+      : undefined
+  }));
+}
+/* ============================================================
+   ADMIN — CHECK IF SESSION EXISTS
+   ============================================================ */
+export async function hasAdminSession(): Promise<boolean> {
+  const {
+    data: { session }
+  } = await supabase.auth.getSession();
+  return Boolean(session);
+}
