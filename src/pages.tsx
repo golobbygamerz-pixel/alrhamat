@@ -58,13 +58,10 @@ import {
   createBooking,
   findBooking,
   getRoomAvailability,
-  getRooms,
 } from "./lib/booking";
 
 import {
-  facilities,
   hotelInfo,
-  reviews,
   rooms,
 } from "./data";
 
@@ -85,9 +82,7 @@ const BOOKING_KEY = "alrahamat_created_booking";
    SESSION STORAGE HELPERS
    ============================================================ */
 
-function saveBookingSearch(
-  search: BookingSearch
-) {
+function saveBookingSearch(search: BookingSearch) {
   sessionStorage.setItem(
     SEARCH_KEY,
     JSON.stringify(search)
@@ -96,22 +91,14 @@ function saveBookingSearch(
 
 function getBookingSearch(): BookingSearch | null {
   try {
-    const value =
-      sessionStorage.getItem(
-        SEARCH_KEY
-      );
-
-    return value
-      ? JSON.parse(value)
-      : null;
+    const value = sessionStorage.getItem(SEARCH_KEY);
+    return value ? JSON.parse(value) : null;
   } catch {
     return null;
   }
 }
 
-function saveSelectedRoom(
-  room: RoomAvailability
-) {
+function saveSelectedRoom(room: RoomAvailability) {
   sessionStorage.setItem(
     ROOM_KEY,
     JSON.stringify(room)
@@ -120,22 +107,14 @@ function saveSelectedRoom(
 
 function getSelectedRoom(): RoomAvailability | null {
   try {
-    const value =
-      sessionStorage.getItem(
-        ROOM_KEY
-      );
-
-    return value
-      ? JSON.parse(value)
-      : null;
+    const value = sessionStorage.getItem(ROOM_KEY);
+    return value ? JSON.parse(value) : null;
   } catch {
     return null;
   }
 }
 
-function saveCreatedBooking(
-  booking: Booking
-) {
+function saveCreatedBooking(booking: Booking) {
   sessionStorage.setItem(
     BOOKING_KEY,
     JSON.stringify(booking)
@@ -144,14 +123,8 @@ function saveCreatedBooking(
 
 function getCreatedBooking(): Booking | null {
   try {
-    const value =
-      sessionStorage.getItem(
-        BOOKING_KEY
-      );
-
-    return value
-      ? JSON.parse(value)
-      : null;
+    const value = sessionStorage.getItem(BOOKING_KEY);
+    return value ? JSON.parse(value) : null;
   } catch {
     return null;
   }
@@ -163,34 +136,21 @@ function getCreatedBooking(): Booking | null {
 
 function todayString() {
   const date = new Date();
-
-  const offset =
-    date.getTimezoneOffset();
+  const offset = date.getTimezoneOffset();
 
   const local = new Date(
-    date.getTime() -
-      offset * 60 * 1000
+    date.getTime() - offset * 60 * 1000
   );
 
-  return local
-    .toISOString()
-    .split("T")[0];
+  return local.toISOString().split("T")[0];
 }
 
-function addDays(
-  dateString: string,
-  days: number
-) {
-  const date = new Date(
-    `${dateString}T00:00:00`
-  );
+function addDays(dateString: string, days: number) {
+  const date = new Date(`${dateString}T00:00:00`);
 
-  date.setDate(
-    date.getDate() + days
-  );
+  date.setDate(date.getDate() + days);
 
-  const year =
-    date.getFullYear();
+  const year = date.getFullYear();
 
   const month = String(
     date.getMonth() + 1
@@ -218,22 +178,17 @@ function nightsBetween(
   return Math.max(
     1,
     Math.ceil(
-      (end - start) /
-        86400000
+      (end - start) / 86400000
     )
   );
 }
 
 function defaultSearch(): BookingSearch {
-  const checkIn =
-    todayString();
+  const checkIn = todayString();
 
   return {
     checkIn,
-    checkOut: addDays(
-      checkIn,
-      1
-    ),
+    checkOut: addDays(checkIn, 1),
     adults: 2,
     children: 0,
     rooms: 1,
@@ -264,9 +219,7 @@ function PageTitle({
 
       <h1>{title}</h1>
 
-      {text && (
-        <p>{text}</p>
-      )}
+      {text && <p>{text}</p>}
     </div>
   );
 }
@@ -282,10 +235,7 @@ export function Home() {
         <main>
           <section className="hero">
             <HeroImage
-              image={
-                rooms[0]
-                  .image_url
-              }
+              image={rooms[0].image_url}
               alt="Al Rahamat Hotel"
             />
 
@@ -340,9 +290,7 @@ export function Home() {
                     Check
                     availability
 
-                    <ArrowRight
-                      size={17}
-                    />
+                    <ArrowRight size={17} />
                   </Button>
 
                   <Link
@@ -373,9 +321,7 @@ export function Home() {
                 description="Choose a room that fits the way you travel."
               />
 
-              <RoomGrid
-                limit={4}
-              />
+              <RoomGrid limit={4} />
 
               <div className="section-center">
                 <Link
@@ -383,10 +329,7 @@ export function Home() {
                   to="/rooms"
                 >
                   View all rooms
-
-                  <ArrowRight
-                    size={16}
-                  />
+                  <ArrowRight size={16} />
                 </Link>
               </div>
             </div>
@@ -423,19 +366,13 @@ export function Home() {
                 >
                   Discover the
                   experience
-
-                  <ArrowRight
-                    size={16}
-                  />
+                  <ArrowRight size={16} />
                 </Link>
               </div>
 
               <div className="experience-image">
                 <img
-                  src={
-                    rooms[1]
-                      .image_url
-                  }
+                  src={rooms[1].image_url}
                   alt="Hotel interior"
                 />
               </div>
@@ -449,12 +386,8 @@ export function Home() {
                 title="Everything you need, thoughtfully placed."
               />
 
-              <FacilityGrid
-                facilities={facilities.slice(
-                  0,
-                  6
-                )}
-              />
+              {/* FacilityGrid does not accept a facilities prop */}
+              <FacilityGrid />
             </div>
           </section>
 
@@ -474,41 +407,6 @@ export function Home() {
    ============================================================ */
 
 export function Rooms() {
-  const [roomList, setRoomList] =
-    useState<Room[]>(rooms);
-
-  const [loading, setLoading] =
-    useState(true);
-
-  useEffect(() => {
-    let active = true;
-
-    getRooms()
-      .then((data) => {
-        if (
-          active &&
-          data.length > 0
-        ) {
-          setRoomList(data);
-        }
-      })
-      .catch(() => {
-        // Local fallback keeps
-        // rooms visible if
-        // Supabase records are
-        // not seeded.
-      })
-      .finally(() => {
-        if (active) {
-          setLoading(false);
-        }
-      });
-
-    return () => {
-      active = false;
-    };
-  }, []);
-
   return (
     <SiteShell>
       <PageTransition>
@@ -533,17 +431,7 @@ export function Rooms() {
 
           <section className="section">
             <div className="container">
-              {loading ? (
-                <LoadingState
-                  text="Loading rooms..."
-                />
-              ) : (
-                <RoomGrid
-                  limit={
-                    roomList.length
-                  }
-                />
-              )}
+              <RoomGrid />
             </div>
           </section>
 
@@ -561,11 +449,9 @@ export function Rooms() {
    ============================================================ */
 
 export function RoomDetails() {
-  const { roomId } =
-    useParams();
+  const { roomId } = useParams();
 
-  const navigate =
-    useNavigate();
+  const navigate = useNavigate();
 
   const room = rooms.find(
     (item) =>
@@ -585,9 +471,7 @@ export function RoomDetails() {
                 action={
                   <Button
                     onClick={() =>
-                      navigate(
-                        "/rooms"
-                      )
+                      navigate("/rooms")
                     }
                   >
                     Back to rooms
@@ -616,8 +500,7 @@ export function RoomDetails() {
                     to: "/rooms",
                   },
                   {
-                    label:
-                      room.name,
+                    label: room.name,
                   },
                 ]}
               />
@@ -629,107 +512,66 @@ export function RoomDetails() {
               <div className="room-gallery">
                 <img
                   className="room-gallery-main"
-                  src={
-                    room.image_url
-                  }
-                  alt={
-                    room.name
-                  }
+                  src={room.image_url}
+                  alt={room.name}
                 />
 
                 {room.gallery
                   .slice(0, 3)
-                  .map(
-                    (image) => (
-                      <img
-                        key={
-                          image
-                        }
-                        src={
-                          image
-                        }
-                        alt={`${room.name} interior`}
-                      />
-                    )
-                  )}
+                  .map((image) => (
+                    <img
+                      key={image}
+                      src={image}
+                      alt={`${room.name} interior`}
+                    />
+                  ))}
               </div>
 
               <div className="room-detail-grid">
                 <div>
                   <span className="eyebrow">
-                    AL RAHAMAT
-                    HOTEL
+                    AL RAHAMAT HOTEL
                   </span>
 
-                  <h1>
-                    {room.name}
-                  </h1>
+                  <h1>{room.name}</h1>
 
                   <p className="lead">
-                    {
-                      room.description
-                    }
+                    {room.description}
                   </p>
 
                   <div className="room-specs">
                     <div>
-                      <BedDouble
-                        size={19}
-                      />
-
+                      <BedDouble size={19} />
                       <span>
-                        {
-                          room.bed_type
-                        }
+                        {room.bed_type}
                       </span>
                     </div>
 
                     <div>
-                      <Users
-                        size={19}
-                      />
-
+                      <Users size={19} />
                       <span>
                         Up to{" "}
-                        {
-                          room.max_guests
-                        }{" "}
+                        {room.max_guests}{" "}
                         guests
                       </span>
                     </div>
 
                     <div>
-                      <Sparkles
-                        size={19}
-                      />
-
+                      <Sparkles size={19} />
                       <span>
-                        {
-                          room.room_size
-                        }{" "}
-                        sq ft
+                        {room.room_size} sq ft
                       </span>
                     </div>
                   </div>
 
                   <div className="detail-block">
-                    <h3>
-                      Amenities
-                    </h3>
+                    <h3>Amenities</h3>
 
                     <div className="amenity-list">
                       {room.amenities.map(
-                        (
-                          amenity
-                        ) => (
-                          <span
-                            key={
-                              amenity
-                            }
-                          >
-                            {
-                              amenity
-                            }
+                        (amenity) => (
+                          <span key={amenity}>
+                            {amenity}
                           </span>
                         )
                       )}
@@ -747,17 +589,15 @@ export function RoomDetails() {
                     {room.price_per_night.toLocaleString(
                       "en-IN"
                     )}
-
                     <small>
                       / night
                     </small>
                   </div>
 
                   <p>
-                    Taxes and
-                    payment options
-                    are shown during
-                    booking.
+                    Taxes and payment
+                    options are shown
+                    during booking.
                   </p>
 
                   <Button
@@ -770,25 +610,22 @@ export function RoomDetails() {
                         search
                       );
 
-                      saveSelectedRoom(
-                        {
-                          room_id:
-                            room.id,
-                          room_name:
-                            room.name,
-                          price_per_night:
-                            room.price_per_night,
-                          max_guests:
-                            room.max_guests,
-                          bed_type:
-                            room.bed_type,
-                          total_units:
-                            room.total_units,
-                          booked_units: 0,
-                          available_units:
-                            room.total_units,
-                        }
-                      );
+                      saveSelectedRoom({
+                        room_id: room.id,
+                        room_name:
+                          room.name,
+                        price_per_night:
+                          room.price_per_night,
+                        max_guests:
+                          room.max_guests,
+                        bed_type:
+                          room.bed_type,
+                        total_units:
+                          room.total_units,
+                        booked_units: 0,
+                        available_units:
+                          room.total_units,
+                      });
 
                       navigate(
                         "/booking/details"
@@ -796,10 +633,7 @@ export function RoomDetails() {
                     }}
                   >
                     Book this room
-
-                    <ArrowRight
-                      size={17}
-                    />
+                    <ArrowRight size={17} />
                   </Button>
                 </aside>
               </div>
@@ -827,8 +661,7 @@ export function Booking() {
               <Breadcrumb
                 items={[
                   {
-                    label:
-                      "Booking",
+                    label: "Booking",
                   },
                 ]}
               />
@@ -864,8 +697,7 @@ export function Booking() {
    ============================================================ */
 
 export function AvailableRooms() {
-  const navigate =
-    useNavigate();
+  const navigate = useNavigate();
 
   const [searchParams] =
     useSearchParams();
@@ -876,9 +708,7 @@ export function AvailableRooms() {
     );
 
   const [results, setResults] =
-    useState<
-      RoomAvailability[]
-    >([]);
+    useState<RoomAvailability[]>([]);
 
   const [loading, setLoading] =
     useState(true);
@@ -896,50 +726,32 @@ export function AvailableRooms() {
     }
 
     const checkIn =
-      searchParams.get(
-        "checkIn"
-      );
+      searchParams.get("checkIn");
 
     const checkOut =
-      searchParams.get(
-        "checkOut"
-      );
+      searchParams.get("checkOut");
 
     if (checkIn && checkOut) {
-      const fallback: BookingSearch =
-        {
-          checkIn,
-          checkOut,
-          adults: Number(
-            searchParams.get(
-              "adults"
-            ) || 2
-          ),
-          children: Number(
-            searchParams.get(
-              "children"
-            ) || 0
-          ),
-          rooms: Number(
-            searchParams.get(
-              "rooms"
-            ) || 1
-          ),
-          bedType:
-            (searchParams.get(
-              "bedType"
-            ) as BedType) ||
-            "King Bed",
-        };
+      const fallback: BookingSearch = {
+        checkIn,
+        checkOut,
+        adults: Number(
+          searchParams.get("adults") || 2
+        ),
+        children: Number(
+          searchParams.get("children") || 0
+        ),
+        rooms: Number(
+          searchParams.get("rooms") || 1
+        ),
+        bedType:
+          (searchParams.get(
+            "bedType"
+          ) as BedType) || "King Bed",
+      };
 
-      saveBookingSearch(
-        fallback
-      );
-
-      setSearch(
-        fallback
-      );
-
+      saveBookingSearch(fallback);
+      setSearch(fallback);
       return;
     }
 
@@ -954,9 +766,7 @@ export function AvailableRooms() {
     setLoading(true);
     setError("");
 
-    getRoomAvailability(
-      search
-    )
+    getRoomAvailability(search)
       .then((data) => {
         if (active) {
           setResults(data);
@@ -965,8 +775,7 @@ export function AvailableRooms() {
       .catch((err) => {
         if (active) {
           setError(
-            err instanceof
-              Error
+            err instanceof Error
               ? err.message
               : "Unable to check availability."
           );
@@ -986,13 +795,8 @@ export function AvailableRooms() {
   const handleSearch = (
     nextSearch: BookingSearch
   ) => {
-    saveBookingSearch(
-      nextSearch
-    );
-
-    setSearch(
-      nextSearch
-    );
+    saveBookingSearch(nextSearch);
+    setSearch(nextSearch);
   };
 
   const matchingResults =
@@ -1023,8 +827,7 @@ export function AvailableRooms() {
               <Breadcrumb
                 items={[
                   {
-                    label:
-                      "Booking",
+                    label: "Booking",
                     to: "/booking",
                   },
                   {
@@ -1055,16 +858,14 @@ export function AvailableRooms() {
             <div className="container">
               <BookingSearchBar
                 initialValues={
-                  search ??
-                  undefined
+                  search ?? undefined
                 }
               />
 
               <div className="results-heading">
                 <div>
                   <span className="eyebrow">
-                    ROOM
-                    AVAILABILITY
+                    ROOM AVAILABILITY
                   </span>
 
                   <h2>
@@ -1081,23 +882,20 @@ export function AvailableRooms() {
                 />
               )}
 
-              {!loading &&
-                error && (
-                  <ErrorState
-                    title="Availability check failed"
-                    message={
-                      error
-                    }
-                    onRetry={
-                      search
-                        ? () =>
-                            handleSearch(
-                              search
-                            )
-                        : undefined
-                    }
-                  />
-                )}
+              {!loading && error && (
+                <ErrorState
+                  title="Availability check failed"
+                  message={error}
+                  onRetry={
+                    search
+                      ? () =>
+                          handleSearch(
+                            search
+                          )
+                      : undefined
+                  }
+                />
+              )}
 
               {!loading &&
                 !error &&
@@ -1127,13 +925,9 @@ export function AvailableRooms() {
                   0 && (
                   <div className="available-room-list">
                     {matchingResults.map(
-                      (
-                        room
-                      ) => (
+                      (room) => (
                         <motion.article
-                          key={
-                            room.room_id
-                          }
+                          key={room.room_id}
                           className="available-room-card"
                           initial={{
                             opacity: 0,
@@ -1161,11 +955,8 @@ export function AvailableRooms() {
                             <div className="available-meta">
                               <span>
                                 <BedDouble
-                                  size={
-                                    16
-                                  }
+                                  size={16}
                                 />
-
                                 {
                                   room.bed_type
                                 }
@@ -1173,11 +964,8 @@ export function AvailableRooms() {
 
                               <span>
                                 <Users
-                                  size={
-                                    16
-                                  }
+                                  size={16}
                                 />
-
                                 Up to{" "}
                                 {
                                   room.max_guests
@@ -1210,11 +998,8 @@ export function AvailableRooms() {
                               }}
                             >
                               Select room
-
                               <ChevronRight
-                                size={
-                                  16
-                                }
+                                size={16}
                               />
                             </Button>
                           </div>
@@ -1238,14 +1023,10 @@ export function AvailableRooms() {
    ============================================================ */
 
 export function GuestDetails() {
-  const navigate =
-    useNavigate();
+  const navigate = useNavigate();
 
-  const search =
-    getBookingSearch();
-
-  const selectedRoom =
-    getSelectedRoom();
+  const search = getBookingSearch();
+  const selectedRoom = getSelectedRoom();
 
   const [guest, setGuest] =
     useState<Guest>({
@@ -1292,16 +1073,21 @@ export function GuestDetails() {
     );
   }
 
-  const nights =
-    nightsBetween(
-      search.checkIn,
-      search.checkOut
-    );
+  const nights = nightsBetween(
+    search.checkIn,
+    search.checkOut
+  );
 
   const totalAmount =
     nights *
     selectedRoom.price_per_night *
     search.rooms;
+
+  /*
+   * Keep the calculated amount available
+   * for the booking summary/UI.
+   */
+  void totalAmount;
 
   const handleSubmit = async (
     event: FormEvent
@@ -1342,11 +1128,10 @@ export function GuestDetails() {
 
     try {
       /*
-       * CREATE THE REAL BOOKING
+       * REAL SUPABASE BOOKING
        *
-       * These fields exactly match
-       * CreateBookingInput from
-       * src/lib/booking.ts.
+       * These property names exactly
+       * match CreateBookingInput.
        */
       const created =
         await createBooking({
@@ -1389,15 +1174,9 @@ export function GuestDetails() {
         });
 
       /*
-       * createBooking returns only:
-       * booking_id
-       * booking_code
-       * total_amount
-       * nights
-       *
-       * Fetch the complete booking
-       * from Supabase so the success
-       * page receives a real Booking.
+       * createBooking returns CreatedBooking,
+       * so fetch the complete Booking from
+       * Supabase before showing success.
        */
       const completeBooking =
         await findBooking(
@@ -1438,8 +1217,7 @@ export function GuestDetails() {
               <Breadcrumb
                 items={[
                   {
-                    label:
-                      "Booking",
+                    label: "Booking",
                     to: "/booking",
                   },
                   {
@@ -1482,17 +1260,12 @@ export function GuestDetails() {
                       value={
                         guest.first_name
                       }
-                      onChange={(
-                        event
-                      ) =>
+                      onChange={(event) =>
                         setGuest(
-                          (
-                            current
-                          ) => ({
+                          (current) => ({
                             ...current,
                             first_name:
-                              event
-                                .target
+                              event.target
                                 .value,
                           })
                         )
@@ -1506,17 +1279,12 @@ export function GuestDetails() {
                       value={
                         guest.last_name
                       }
-                      onChange={(
-                        event
-                      ) =>
+                      onChange={(event) =>
                         setGuest(
-                          (
-                            current
-                          ) => ({
+                          (current) => ({
                             ...current,
                             last_name:
-                              event
-                                .target
+                              event.target
                                 .value,
                           })
                         )
@@ -1531,17 +1299,12 @@ export function GuestDetails() {
                       value={
                         guest.phone
                       }
-                      onChange={(
-                        event
-                      ) =>
+                      onChange={(event) =>
                         setGuest(
-                          (
-                            current
-                          ) => ({
+                          (current) => ({
                             ...current,
                             phone:
-                              event
-                                .target
+                              event.target
                                 .value,
                           })
                         )
@@ -1556,17 +1319,12 @@ export function GuestDetails() {
                       value={
                         guest.email
                       }
-                      onChange={(
-                        event
-                      ) =>
+                      onChange={(event) =>
                         setGuest(
-                          (
-                            current
-                          ) => ({
+                          (current) => ({
                             ...current,
                             email:
-                              event
-                                .target
+                              event.target
                                 .value,
                           })
                         )
@@ -1588,17 +1346,12 @@ export function GuestDetails() {
                       guest.special_request ||
                       ""
                     }
-                    onChange={(
-                      event
-                    ) =>
+                    onChange={(event) =>
                       setGuest(
-                        (
-                          current
-                        ) => ({
+                        (current) => ({
                           ...current,
                           special_request:
-                            event
-                              .target
+                            event.target
                               .value,
                         })
                       )
@@ -1623,20 +1376,15 @@ export function GuestDetails() {
                     : "Confirm reservation"}
 
                   {!loading && (
-                    <ArrowRight
-                      size={17}
-                    />
+                    <ArrowRight size={17} />
                   )}
                 </Button>
 
                 <p className="secure-note">
-                  <ShieldCheck
-                    size={16}
-                  />
-
-                  Your reservation
-                  is protected by
-                  our secure booking
+                  <ShieldCheck size={16} />
+                  Your reservation is
+                  protected by our
+                  secure booking
                   system.
                 </p>
               </form>
@@ -1693,8 +1441,7 @@ export function GuestDetails() {
    ============================================================ */
 
 export function BookingSuccess() {
-  const navigate =
-    useNavigate();
+  const navigate = useNavigate();
 
   const booking =
     getCreatedBooking();
@@ -1746,19 +1493,15 @@ export function BookingSuccess() {
               }}
             >
               <div className="success-icon">
-                <CheckCircle2
-                  size={42}
-                />
+                <CheckCircle2 size={42} />
               </div>
 
               <span className="eyebrow">
-                RESERVATION
-                CONFIRMED
+                RESERVATION CONFIRMED
               </span>
 
               <h1>
-                Your stay is
-                booked.
+                Your stay is booked.
               </h1>
 
               <p>
@@ -1785,10 +1528,7 @@ export function BookingSuccess() {
 
               <div className="success-details">
                 <div>
-                  <span>
-                    Room
-                  </span>
-
+                  <span>Room</span>
                   <strong>
                     {booking.room
                       ?.name ||
@@ -1797,10 +1537,7 @@ export function BookingSuccess() {
                 </div>
 
                 <div>
-                  <span>
-                    Check-in
-                  </span>
-
+                  <span>Check-in</span>
                   <strong>
                     {
                       booking.check_in
@@ -1809,10 +1546,7 @@ export function BookingSuccess() {
                 </div>
 
                 <div>
-                  <span>
-                    Check-out
-                  </span>
-
+                  <span>Check-out</span>
                   <strong>
                     {
                       booking.check_out
@@ -1821,10 +1555,7 @@ export function BookingSuccess() {
                 </div>
 
                 <div>
-                  <span>
-                    Guests
-                  </span>
-
+                  <span>Guests</span>
                   <strong>
                     {
                       booking.adults
@@ -1838,10 +1569,7 @@ export function BookingSuccess() {
                 </div>
 
                 <div>
-                  <span>
-                    Total
-                  </span>
-
+                  <span>Total</span>
                   <strong>
                     ₹
                     {booking.total_amount.toLocaleString(
@@ -1851,14 +1579,9 @@ export function BookingSuccess() {
                 </div>
 
                 <div>
-                  <span>
-                    Status
-                  </span>
-
+                  <span>Status</span>
                   <strong className="status-badge">
-                    {
-                      booking.status
-                    }
+                    {booking.status}
                   </strong>
                 </div>
               </div>
@@ -1903,9 +1626,7 @@ export function MyBooking() {
     useState("");
 
   const [booking, setBooking] =
-    useState<Booking | null>(
-      null
-    );
+    useState<Booking | null>(null);
 
   const [loading, setLoading] =
     useState(false);
@@ -1991,14 +1712,11 @@ export function MyBooking() {
                 }
               >
                 <div className="lookup-icon">
-                  <Search
-                    size={22}
-                  />
+                  <Search size={22} />
                 </div>
 
                 <h2>
-                  Reservation
-                  lookup
+                  Reservation lookup
                 </h2>
 
                 <FormField
@@ -2007,12 +1725,9 @@ export function MyBooking() {
                   value={
                     bookingCode
                   }
-                  onChange={(
-                    event
-                  ) =>
+                  onChange={(event) =>
                     setBookingCode(
-                      event
-                        .target
+                      event.target
                         .value
                     )
                   }
@@ -2025,12 +1740,9 @@ export function MyBooking() {
                   name="phone"
                   type="tel"
                   value={phone}
-                  onChange={(
-                    event
-                  ) =>
+                  onChange={(event) =>
                     setPhone(
-                      event
-                        .target
+                      event.target
                         .value
                     )
                   }
@@ -2263,11 +1975,8 @@ export function Facilities() {
 
           <section className="section">
             <div className="container">
-              <FacilityGrid
-                facilities={
-                  facilities
-                }
-              />
+              {/* Fixed: FacilityGrid accepts no props */}
+              <FacilityGrid />
             </div>
           </section>
 
@@ -2291,10 +2000,7 @@ export function Experience() {
         <main>
           <section className="cinematic-section">
             <HeroImage
-              image={
-                rooms[2]
-                  .image_url
-              }
+              image={rooms[2].image_url}
               alt="Al Rahamat Hotel experience"
             />
 
@@ -2376,9 +2082,7 @@ export function Experience() {
 
               <div className="three-column">
                 <div className="value-card">
-                  <Sparkles
-                    size={24}
-                  />
+                  <Sparkles size={24} />
 
                   <h3>
                     Considered
@@ -2395,9 +2099,7 @@ export function Experience() {
                 </div>
 
                 <div className="value-card">
-                  <Users
-                    size={24}
-                  />
+                  <Users size={24} />
 
                   <h3>
                     Warm
@@ -2413,9 +2115,7 @@ export function Experience() {
                 </div>
 
                 <div className="value-card">
-                  <Clock3
-                    size={24}
-                  />
+                  <Clock3 size={24} />
 
                   <h3>
                     Easy stays
@@ -2473,10 +2173,7 @@ export function About() {
             <div className="container split-section">
               <div className="about-image">
                 <img
-                  src={
-                    rooms[3]
-                      .image_url
-                  }
+                  src={rooms[3].image_url}
                   alt="Al Rahamat Hotel"
                 />
               </div>
@@ -2550,8 +2247,7 @@ export function Contact() {
               <Breadcrumb
                 items={[
                   {
-                    label:
-                      "Contact",
+                    label: "Contact",
                   },
                 ]}
               />
@@ -2568,14 +2264,12 @@ export function Contact() {
             <div className="container contact-layout">
               <div>
                 <ContactInfo />
-
                 <HotelTimings />
               </div>
 
               <div className="contact-card">
                 <span className="eyebrow">
-                  AL RAHAMAT
-                  HOTEL
+                  AL RAHAMAT HOTEL
                 </span>
 
                 <h2>
@@ -2596,35 +2290,20 @@ export function Contact() {
                   <a
                     href={`tel:${hotelInfo.phone}`}
                   >
-                    <Phone
-                      size={18}
-                    />
-
-                    {
-                      hotelInfo.phone
-                    }
+                    <Phone size={18} />
+                    {hotelInfo.phone}
                   </a>
 
                   <a
                     href={`mailto:${hotelInfo.email}`}
                   >
-                    <Mail
-                      size={18}
-                    />
-
-                    {
-                      hotelInfo.email
-                    }
+                    <Mail size={18} />
+                    {hotelInfo.email}
                   </a>
 
                   <div>
-                    <MapPin
-                      size={18}
-                    />
-
-                    {
-                      hotelInfo.address
-                    }
+                    <MapPin size={18} />
+                    {hotelInfo.address}
                   </div>
                 </div>
 
@@ -2632,12 +2311,8 @@ export function Contact() {
                   className="button button-primary"
                   to="/booking"
                 >
-                  Check
-                  availability
-
-                  <ArrowRight
-                    size={17}
-                  />
+                  Check availability
+                  <ArrowRight size={17} />
                 </Link>
               </div>
             </div>
@@ -2652,9 +2327,7 @@ export function Contact() {
 
               <div className="three-column">
                 <div className="value-card">
-                  <CalendarDays
-                    size={23}
-                  />
+                  <CalendarDays size={23} />
 
                   <h3>
                     Check-in
@@ -2668,9 +2341,7 @@ export function Contact() {
                 </div>
 
                 <div className="value-card">
-                  <Clock3
-                    size={23}
-                  />
+                  <Clock3 size={23} />
 
                   <h3>
                     Check-out
@@ -2684,13 +2355,10 @@ export function Contact() {
                 </div>
 
                 <div className="value-card">
-                  <ShieldCheck
-                    size={23}
-                  />
+                  <ShieldCheck size={23} />
 
                   <h3>
-                    Booking
-                    support
+                    Booking support
                   </h3>
 
                   <p>
