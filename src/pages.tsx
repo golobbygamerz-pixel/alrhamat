@@ -1,5 +1,5 @@
 import {
-  FormEvent,
+  type FormEvent,
   useEffect,
   useMemo,
   useState,
@@ -26,6 +26,7 @@ import {
   Sparkles,
   Users,
 } from "lucide-react";
+
 import {
   BookingCTA,
   BookingSearchBar,
@@ -43,23 +44,27 @@ import {
   LoadingState,
   PageTransition,
   Reviews,
+  RoomGrid,
   SectionHeading,
   SiteShell,
   TextAreaField,
   TrustStrip,
 } from "./components";
+
 import {
   createBooking,
   findBooking,
   getRoomAvailability,
   getRooms,
 } from "./lib/booking";
+
 import {
   facilities,
   hotelInfo,
   reviews,
   rooms,
 } from "./data";
+
 import type {
   BedType,
   Booking,
@@ -74,7 +79,10 @@ const ROOM_KEY = "alrahamat_selected_room";
 const BOOKING_KEY = "alrahamat_created_booking";
 
 function saveBookingSearch(search: BookingSearch) {
-  sessionStorage.setItem(SEARCH_KEY, JSON.stringify(search));
+  sessionStorage.setItem(
+    SEARCH_KEY,
+    JSON.stringify(search)
+  );
 }
 
 function getBookingSearch(): BookingSearch | null {
@@ -87,7 +95,10 @@ function getBookingSearch(): BookingSearch | null {
 }
 
 function saveSelectedRoom(room: RoomAvailability) {
-  sessionStorage.setItem(ROOM_KEY, JSON.stringify(room));
+  sessionStorage.setItem(
+    ROOM_KEY,
+    JSON.stringify(room)
+  );
 }
 
 function getSelectedRoom(): RoomAvailability | null {
@@ -99,8 +110,11 @@ function getSelectedRoom(): RoomAvailability | null {
   }
 }
 
-function saveCreatedBooking(booking: unknown) {
-  sessionStorage.setItem(BOOKING_KEY, JSON.stringify(booking));
+function saveCreatedBooking(booking: Booking) {
+  sessionStorage.setItem(
+    BOOKING_KEY,
+    JSON.stringify(booking)
+  );
 }
 
 function getCreatedBooking(): Booking | null {
@@ -115,28 +129,51 @@ function getCreatedBooking(): Booking | null {
 function todayString() {
   const date = new Date();
   const offset = date.getTimezoneOffset();
-  const local = new Date(date.getTime() - offset * 60 * 1000);
+  const local = new Date(
+    date.getTime() - offset * 60 * 1000
+  );
+
   return local.toISOString().split("T")[0];
 }
 
-function addDays(dateString: string, days: number) {
-  const date = new Date(`${dateString}T00:00:00`);
+function addDays(
+  dateString: string,
+  days: number
+) {
+  const date = new Date(
+    `${dateString}T00:00:00`
+  );
+
   date.setDate(date.getDate() + days);
 
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(
+    date.getMonth() + 1
+  ).padStart(2, "0");
+  const day = String(
+    date.getDate()
+  ).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
 }
 
-function nightsBetween(checkIn: string, checkOut: string) {
-  const start = new Date(`${checkIn}T00:00:00`).getTime();
-  const end = new Date(`${checkOut}T00:00:00`).getTime();
+function nightsBetween(
+  checkIn: string,
+  checkOut: string
+) {
+  const start = new Date(
+    `${checkIn}T00:00:00`
+  ).getTime();
+
+  const end = new Date(
+    `${checkOut}T00:00:00`
+  ).getTime();
 
   return Math.max(
     1,
-    Math.ceil((end - start) / 86400000)
+    Math.ceil(
+      (end - start) / 86400000
+    )
   );
 }
 
@@ -165,7 +202,9 @@ function PageTitle({
   return (
     <div className="page-title">
       {eyebrow && (
-        <span className="eyebrow">{eyebrow}</span>
+        <span className="eyebrow">
+          {eyebrow}
+        </span>
       )}
 
       <h1>{title}</h1>
@@ -182,7 +221,9 @@ function PageTitle({
 export function Home() {
   const navigate = useNavigate();
 
-  const handleSearch = (search: BookingSearch) => {
+  const handleSearch = (
+    search: BookingSearch
+  ) => {
     saveBookingSearch(search);
     navigate("/booking/rooms");
   };
@@ -193,7 +234,7 @@ export function Home() {
         <main>
           <section className="hero">
             <HeroImage
-              src={rooms[0].image_url}
+              image={rooms[0].image_url}
               alt="Al Rahamat Hotel"
             />
 
@@ -201,9 +242,17 @@ export function Home() {
 
             <div className="container hero-content">
               <motion.div
-                initial={{ opacity: 0, y: 25 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.7 }}
+                initial={{
+                  opacity: 0,
+                  y: 25,
+                }}
+                animate={{
+                  opacity: 1,
+                  y: 0,
+                }}
+                transition={{
+                  duration: 0.7,
+                }}
                 className="hero-copy"
               >
                 <span className="eyebrow hero-eyebrow">
@@ -223,7 +272,9 @@ export function Home() {
                   <Button
                     onClick={() =>
                       document
-                        .getElementById("availability")
+                        .getElementById(
+                          "availability"
+                        )
                         ?.scrollIntoView({
                           behavior: "smooth",
                         })
@@ -249,9 +300,7 @@ export function Home() {
             className="availability-section"
           >
             <div className="container">
-              <BookingSearchBar
-                onSearch={handleSearch}
-              />
+              <BookingSearchBar />
             </div>
           </section>
 
@@ -260,10 +309,12 @@ export function Home() {
               <SectionHeading
                 eyebrow="STAY WITH US"
                 title="Rooms made for slower mornings."
-                text="Choose a room that fits the way you travel."
+                description="Choose a room that fits the way you travel."
               />
 
-              <RoomGrid rooms={rooms.slice(0, 4)} />
+              <RoomGrid
+                rooms={rooms.slice(0, 4)}
+              />
 
               <div className="section-center">
                 <Link
@@ -326,7 +377,7 @@ export function Home() {
             </div>
           </section>
 
-          <Reviews reviews={reviews} />
+          <Reviews />
 
           <BookingCTA />
         </main>
@@ -353,13 +404,16 @@ export function Rooms() {
 
     getRooms()
       .then((data) => {
-        if (active && data.length > 0) {
+        if (
+          active &&
+          data.length > 0
+        ) {
           setRoomList(data);
         }
       })
       .catch(() => {
-        // Local fallback data keeps the room catalogue visible
-        // before Supabase room records are seeded.
+        // Local fallback keeps rooms visible
+        // if Supabase room records are not seeded.
       })
       .finally(() => {
         if (active) {
@@ -379,7 +433,11 @@ export function Rooms() {
           <section className="page-hero">
             <div className="container">
               <Breadcrumb
-                items={[{ label: "Rooms" }]}
+                items={[
+                  {
+                    label: "Rooms",
+                  },
+                ]}
               />
 
               <PageTitle
@@ -415,14 +473,13 @@ export function Rooms() {
 
 export function RoomDetails() {
   const { roomId } = useParams();
+  const navigate = useNavigate();
 
   const room = rooms.find(
     (item) =>
       item.id === roomId ||
       item.slug === roomId
   );
-
-  const navigate = useNavigate();
 
   if (!room) {
     return (
@@ -432,7 +489,7 @@ export function RoomDetails() {
             <div className="container">
               <EmptyState
                 title="Room not found"
-                text="The room you're looking for is unavailable."
+                message="The room you're looking for is unavailable."
                 action={
                   <Button
                     onClick={() =>
@@ -507,7 +564,9 @@ export function RoomDetails() {
                   <div className="room-specs">
                     <div>
                       <BedDouble size={19} />
-                      <span>{room.bed_type}</span>
+                      <span>
+                        {room.bed_type}
+                      </span>
                     </div>
 
                     <div>
@@ -531,7 +590,9 @@ export function RoomDetails() {
                     <div className="amenity-list">
                       {room.amenities.map(
                         (amenity) => (
-                          <span key={amenity}>
+                          <span
+                            key={amenity}
+                          >
                             {amenity}
                           </span>
                         )
@@ -551,7 +612,9 @@ export function RoomDetails() {
                       "en-IN"
                     )}
 
-                    <small>/ night</small>
+                    <small>
+                      / night
+                    </small>
                   </div>
 
                   <p>
@@ -560,7 +623,7 @@ export function RoomDetails() {
                   </p>
 
                   <Button
-                    full
+                    fullWidth
                     onClick={() => {
                       const search =
                         defaultSearch();
@@ -625,7 +688,9 @@ export function Booking() {
             <div className="container">
               <Breadcrumb
                 items={[
-                  { label: "Booking" },
+                  {
+                    label: "Booking",
+                  },
                 ]}
               />
 
@@ -640,11 +705,10 @@ export function Booking() {
           <section className="section">
             <div className="container narrow-container">
               <BookingSearchBar
-                initialValue={
+                initialValues={
                   getBookingSearch() ??
                   undefined
                 }
-                onSearch={handleSearch}
               />
             </div>
           </section>
@@ -700,13 +764,19 @@ export function AvailableRooms() {
         checkIn,
         checkOut,
         adults: Number(
-          searchParams.get("adults") || 2
+          searchParams.get(
+            "adults"
+          ) || 2
         ),
         children: Number(
-          searchParams.get("children") || 0
+          searchParams.get(
+            "children"
+          ) || 0
         ),
         rooms: Number(
-          searchParams.get("rooms") || 1
+          searchParams.get(
+            "rooms"
+          ) || 1
         ),
         bedType:
           (searchParams.get(
@@ -715,7 +785,10 @@ export function AvailableRooms() {
           "King Bed",
       };
 
-      saveBookingSearch(fallback);
+      saveBookingSearch(
+        fallback
+      );
+
       setSearch(fallback);
       return;
     }
@@ -760,7 +833,10 @@ export function AvailableRooms() {
   const handleSearch = (
     nextSearch: BookingSearch
   ) => {
-    saveBookingSearch(nextSearch);
+    saveBookingSearch(
+      nextSearch
+    );
+
     setSearch(nextSearch);
   };
 
@@ -768,7 +844,8 @@ export function AvailableRooms() {
     if (!search) return [];
 
     const totalGuests =
-      search.adults + search.children;
+      search.adults +
+      search.children;
 
     return results.filter(
       (room) =>
@@ -806,7 +883,8 @@ export function AvailableRooms() {
                 text={
                   search
                     ? `${search.adults} adults · ${search.children} children · ${search.rooms} room${
-                        search.rooms > 1
+                        search.rooms >
+                        1
                           ? "s"
                           : ""
                       }`
@@ -819,10 +897,10 @@ export function AvailableRooms() {
           <section className="availability-results section">
             <div className="container">
               <BookingSearchBar
-                initialValue={
-                  search ?? undefined
+                initialValues={
+                  search ??
+                  undefined
                 }
-                onSearch={handleSearch}
               />
 
               <div className="results-heading">
@@ -845,25 +923,21 @@ export function AvailableRooms() {
                 />
               )}
 
-              {!loading && error && (
-                <ErrorState
-                  title="Availability check failed"
-                  text={error}
-                  action={
-                    search ? (
-                      <Button
-                        onClick={() =>
-                          handleSearch(
-                            search
-                          )
-                        }
-                      >
-                        Try again
-                      </Button>
-                    ) : undefined
-                  }
-                />
-              )}
+              {!loading &&
+                error && (
+                  <ErrorState
+                    title="Availability check failed"
+                    message={error}
+                    onRetry={
+                      search
+                        ? () =>
+                            handleSearch(
+                              search
+                            )
+                        : undefined
+                    }
+                  />
+                )}
 
               {!loading &&
                 !error &&
@@ -872,7 +946,7 @@ export function AvailableRooms() {
                   0 && (
                   <EmptyState
                     title="No rooms match your search"
-                    text="Try another bed type, fewer rooms, or different dates."
+                    message="Try another bed type, fewer rooms, or different dates."
                     action={
                       <Button
                         onClick={() =>
@@ -895,7 +969,9 @@ export function AvailableRooms() {
                     {matchingResults.map(
                       (room) => (
                         <motion.article
-                          key={room.room_id}
+                          key={
+                            room.room_id
+                          }
                           className="available-room-card"
                           initial={{
                             opacity: 0,
@@ -1022,11 +1098,13 @@ export function GuestDetails() {
             <div className="container">
               <EmptyState
                 title="Booking details are missing"
-                text="Please start the booking process again."
+                message="Please start the booking process again."
                 action={
                   <Button
                     onClick={() =>
-                      navigate("/booking")
+                      navigate(
+                        "/booking"
+                      )
                     }
                   >
                     Start booking
@@ -1094,7 +1172,8 @@ export function GuestDetails() {
         await createBooking({
           roomId:
             selectedRoom.room_id,
-          guest,
+          guestDetails:
+            guest,
           checkIn:
             search.checkIn,
           checkOut:
@@ -1103,7 +1182,7 @@ export function GuestDetails() {
             search.adults,
           children:
             search.children,
-          roomsCount:
+          rooms:
             search.rooms,
           bedType:
             search.bedType,
@@ -1163,7 +1242,9 @@ export function GuestDetails() {
             <div className="container booking-layout">
               <form
                 className="guest-form"
-                onSubmit={handleSubmit}
+                onSubmit={
+                  handleSubmit
+                }
               >
                 <div className="form-section">
                   <h2>
@@ -1173,11 +1254,12 @@ export function GuestDetails() {
                   <div className="form-grid">
                     <FormField
                       label="First name"
+                      name="first_name"
                       value={
                         guest.first_name
                       }
                       onChange={(
-                        value
+                        event
                       ) =>
                         setGuest(
                           (
@@ -1185,7 +1267,8 @@ export function GuestDetails() {
                           ) => ({
                             ...current,
                             first_name:
-                              value,
+                              event.target
+                                .value,
                           })
                         )
                       }
@@ -1194,11 +1277,12 @@ export function GuestDetails() {
 
                     <FormField
                       label="Last name"
+                      name="last_name"
                       value={
                         guest.last_name
                       }
                       onChange={(
-                        value
+                        event
                       ) =>
                         setGuest(
                           (
@@ -1206,7 +1290,8 @@ export function GuestDetails() {
                           ) => ({
                             ...current,
                             last_name:
-                              value,
+                              event.target
+                                .value,
                           })
                         )
                       }
@@ -1215,19 +1300,22 @@ export function GuestDetails() {
 
                     <FormField
                       label="Phone number"
+                      name="phone"
                       type="tel"
                       value={
                         guest.phone
                       }
                       onChange={(
-                        value
+                        event
                       ) =>
                         setGuest(
                           (
                             current
                           ) => ({
                             ...current,
-                            phone: value,
+                            phone:
+                              event.target
+                                .value,
                           })
                         )
                       }
@@ -1236,19 +1324,22 @@ export function GuestDetails() {
 
                     <FormField
                       label="Email address"
+                      name="email"
                       type="email"
                       value={
                         guest.email
                       }
                       onChange={(
-                        value
+                        event
                       ) =>
                         setGuest(
                           (
                             current
                           ) => ({
                             ...current,
-                            email: value,
+                            email:
+                              event.target
+                                .value,
                           })
                         )
                       }
@@ -1264,12 +1355,13 @@ export function GuestDetails() {
 
                   <TextAreaField
                     label="Anything we should know?"
+                    name="special_request"
                     value={
                       guest.special_request ||
                       ""
                     }
                     onChange={(
-                      value
+                      event
                     ) =>
                       setGuest(
                         (
@@ -1277,7 +1369,8 @@ export function GuestDetails() {
                         ) => ({
                           ...current,
                           special_request:
-                            value,
+                            event.target
+                              .value,
                         })
                       )
                     }
@@ -1294,7 +1387,7 @@ export function GuestDetails() {
                 <Button
                   type="submit"
                   disabled={loading}
-                  full
+                  fullWidth
                 >
                   {loading
                     ? "Creating reservation..."
@@ -1316,9 +1409,24 @@ export function GuestDetails() {
               </form>
 
               <BookingSummary
-                roomName={
-                  selectedRoom.room_name
-                }
+                room={{
+                  id: selectedRoom.room_id,
+                  slug: selectedRoom.room_id,
+                  name: selectedRoom.room_name,
+                  description: "",
+                  image_url: "",
+                  gallery: [],
+                  price_per_night:
+                    selectedRoom.price_per_night,
+                  max_guests:
+                    selectedRoom.max_guests,
+                  bed_type:
+                    selectedRoom.bed_type,
+                  room_size: 0,
+                  amenities: [],
+                  total_units:
+                    selectedRoom.total_units,
+                }}
                 checkIn={
                   search.checkIn
                 }
@@ -1331,18 +1439,8 @@ export function GuestDetails() {
                 children={
                   search.children
                 }
-                rooms={
+                roomsCount={
                   search.rooms
-                }
-                bedType={
-                  search.bedType
-                }
-                nights={nights}
-                pricePerNight={
-                  selectedRoom.price_per_night
-                }
-                total={
-                  totalAmount
                 }
               />
             </div>
@@ -1373,7 +1471,7 @@ export function BookingSuccess() {
             <div className="container">
               <EmptyState
                 title="Booking not found"
-                text="Your booking details are no longer available on this device."
+                message="Your booking details are no longer available on this device."
                 action={
                   <Button
                     onClick={() =>
@@ -1445,6 +1543,7 @@ export function BookingSuccess() {
               <div className="success-details">
                 <div>
                   <span>Room</span>
+
                   <strong>
                     {booking.room?.name ||
                       "Selected room"}
@@ -1455,6 +1554,7 @@ export function BookingSuccess() {
                   <span>
                     Check-in
                   </span>
+
                   <strong>
                     {booking.check_in}
                   </strong>
@@ -1464,6 +1564,7 @@ export function BookingSuccess() {
                   <span>
                     Check-out
                   </span>
+
                   <strong>
                     {booking.check_out}
                   </strong>
@@ -1471,6 +1572,7 @@ export function BookingSuccess() {
 
                 <div>
                   <span>Guests</span>
+
                   <strong>
                     {booking.adults} adults
                     {booking.children >
@@ -1482,6 +1584,7 @@ export function BookingSuccess() {
 
                 <div>
                   <span>Total</span>
+
                   <strong>
                     ₹
                     {booking.total_amount.toLocaleString(
@@ -1492,6 +1595,7 @@ export function BookingSuccess() {
 
                 <div>
                   <span>Status</span>
+
                   <strong className="status-badge">
                     {booking.status}
                   </strong>
@@ -1633,11 +1737,16 @@ export function MyBooking() {
 
                 <FormField
                   label="Booking ID"
+                  name="booking_code"
                   value={
                     bookingCode
                   }
-                  onChange={
-                    setBookingCode
+                  onChange={(
+                    event
+                  ) =>
+                    setBookingCode(
+                      event.target.value
+                    )
                   }
                   placeholder="e.g. ARH-ABC123"
                   required
@@ -1645,9 +1754,16 @@ export function MyBooking() {
 
                 <FormField
                   label="Phone number"
+                  name="phone"
                   type="tel"
                   value={phone}
-                  onChange={setPhone}
+                  onChange={(
+                    event
+                  ) =>
+                    setPhone(
+                      event.target.value
+                    )
+                  }
                   required
                 />
 
@@ -1659,7 +1775,7 @@ export function MyBooking() {
 
                 <Button
                   type="submit"
-                  full
+                  fullWidth
                   disabled={loading}
                 >
                   {loading
@@ -1697,7 +1813,7 @@ export function MyBooking() {
                       className={`status-badge ${booking.status}`}
                     >
                       {booking.status.replace(
-                        "_",
+                        /_/g,
                         " "
                       )}
                     </span>
@@ -1903,7 +2019,7 @@ export function Experience() {
         <main>
           <section className="cinematic-section">
             <HeroImage
-              src={rooms[2].image_url}
+              image={rooms[2].image_url}
               alt="Al Rahamat Hotel experience"
             />
 
@@ -2097,7 +2213,7 @@ export function About() {
             </div>
           </section>
 
-          <Reviews reviews={reviews} />
+          <Reviews />
 
           <BookingCTA />
         </main>
@@ -2139,20 +2255,9 @@ export function Contact() {
           <section className="section">
             <div className="container contact-layout">
               <div>
-                <ContactInfo
-                  phone={hotelInfo.phone}
-                  email={hotelInfo.email}
-                  address={hotelInfo.address}
-                />
+                <ContactInfo />
 
-                <HotelTimings
-                  checkIn={
-                    hotelInfo.checkIn
-                  }
-                  checkOut={
-                    hotelInfo.checkOut
-                  }
-                />
+                <HotelTimings />
               </div>
 
               <div className="contact-card">
@@ -2221,7 +2326,7 @@ export function Contact() {
                   </h3>
 
                   <p>
-                    {hotelInfo.checkIn}
+                    {hotelInfo.checkInTime}
                   </p>
                 </div>
 
@@ -2233,7 +2338,7 @@ export function Contact() {
                   </h3>
 
                   <p>
-                    {hotelInfo.checkOut}
+                    {hotelInfo.checkOutTime}
                   </p>
                 </div>
 
