@@ -1,5 +1,6 @@
 import {
   type FormEvent,
+  type ReactNode,
   useEffect,
   useMemo,
   useState,
@@ -106,7 +107,7 @@ function statusClass(status: string) {
 function AdminGuard({
   children,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   const [checking, setChecking] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
@@ -325,7 +326,7 @@ function AdminLayout({
   title,
   subtitle,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
   title: string;
   subtitle?: string;
 }) {
@@ -426,7 +427,7 @@ function StatCard({
 }: {
   label: string;
   value: string | number;
-  icon: React.ReactNode;
+  icon: ReactNode;
   detail?: string;
 }) {
   return (
